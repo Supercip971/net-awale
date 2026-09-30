@@ -6,4 +6,6 @@ typedef struct Game
     // player 2: last 6
     int board[12];
     int hands[2];
+    char *p1;
+    char *p2;
 } Game;
