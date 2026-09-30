@@ -3,7 +3,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/socket.h>
-#include "server/client2.h"
 #include "server/server2.h"
 
 static void init(void)
@@ -91,14 +90,13 @@ static void app(void)
 
             FD_SET(csock, &rdfs);
 
-            Client c = {csock};
+            Client c = {.sock = csock};
             strncpy(c.name, buffer, BUF_SIZE - 1);
             clients[actual] = c;
             actual++;
         }
         else
         {
-            int i = 0;
             for (i = 0; i < actual; i++)
             {
                 /* a client is talking */
@@ -227,7 +225,7 @@ static void write_client(SOCKET sock, const char *buffer)
     }
 }
 
-int main(int argc, char **argv)
+int main(void)
 {
     init();
 

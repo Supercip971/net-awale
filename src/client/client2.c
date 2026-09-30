@@ -148,7 +148,7 @@ static void write_server(SOCKET sock, const char *buffer)
 
 int main(int argc, char **argv)
 {
-    if (argc < 2)
+    if (argc < 3)
     {
         printf("Usage : %s [address] [pseudo]\n", argv[0]);
         return EXIT_FAILURE;
