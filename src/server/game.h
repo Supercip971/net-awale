@@ -2,4 +2,4 @@
 
 #include "shared/game.h"
 
-void gameInit(Game *board);
+void gameInit(Game *game);
