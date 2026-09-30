@@ -16,6 +16,7 @@ CFLAGS = 			\
 		-g 		 	\
 		-std=gnu2x 	\
 		-Isrc/      \
+		-Isrc/shared/json/ \
 		$(CFLAGS_WARNS)
 
 LDFLAGS=
