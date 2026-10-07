@@ -13,15 +13,24 @@ int parse_message(const char *buffer, ClientServerMessage *msg)
     char command[32] = {0};
     char arg[BUF_SIZE] = {0};
 
-    int n = sscanf(buffer, "%31s %s", command, arg);
-    if (n < 1)
+    if (sscanf(buffer, "%31s %s", command, arg) < 1)
         return -1;
+
     if (strcmp(command, "players") == 0)
         msg->kind = MSG_PLAYERS;
-    else if (strcmp(command, "play") == 0 && n == 2)
+    else if (strcmp(command, "play") == 0)
     {
         msg->kind = MSG_PLAY;
         msg->play.hole = atoi(arg);
+    }
+    else if (strcmp(command, "message") == 0)
+    {
+        char *space = strchr(buffer, ' ');
+        if (space == NULL || space[1] == 0)
+            return -1;
+        msg->kind = MSG_MESSAGE;
+        strncpy(msg->message.message, arg, sizeof msg->message.message - 1);
+        msg->message.message[sizeof msg->message.message - 1] = 0;
     }
     else
         return -1;
