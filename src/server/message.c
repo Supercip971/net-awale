@@ -41,6 +41,15 @@ int parse_message(const char *buffer, ClientServerMessage *msg)
         strncpy(msg->defy.pseudo, arg, sizeof msg->defy.pseudo - 1);
         msg->defy.pseudo[sizeof msg->defy.pseudo - 1] = 0;
     }
+    else if (strcmp(command, "decline") == 0)
+    {
+        if (arg[0] == 0)
+            return -1;
+
+        msg->kind = MSG_DECLINE_DEFY;
+        strncpy(msg->declineDefy.pseudo, arg, sizeof msg->declineDefy.pseudo - 1);
+        msg->declineDefy.pseudo[sizeof msg->declineDefy.pseudo - 1] = 0;
+    }
     else
         return -1;
     return 0;

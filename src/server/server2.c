@@ -9,6 +9,19 @@
 #include "server/server2.h"
 #include "shared/game.h"
 
+void removeGamesOf(Games *games, const char *name)
+{
+    for (int i = games->count - 1; i >= 0; --i)
+    {
+        if (strcmp(games->games[i].playerNames[0], name) == 0 ||
+            strcmp(games->games[i].playerNames[1], name) == 0)
+        {
+            vec_splice_((char **)&games->games, &games->count, &games->capacity, sizeof(Game), i, 1);
+            --games->count;
+        }
+    }
+}
+
 int check_name_exist(Client *listeClients, int clientCount, const char *name)
 {
     for (int i = 0; i < clientCount; ++i)
@@ -153,6 +166,7 @@ void app(void)
                         strncpy(buffer, client.name, BUF_SIZE - 1);
                         buffer[BUF_SIZE - 1] = 0;
                         strncat(buffer, " disconnected !", BUF_SIZE - strlen(buffer) - 1);
+                        removeGamesOf(&games, client.name);
                         send_message_to_all_clients(clients, client, actual, buffer, 1);
                     }
                     else
