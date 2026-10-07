@@ -126,7 +126,7 @@ void app(void)
 
             // On enlève les \r et \n des pseudos
             buffer[strcspn(buffer, "\r\n")] = 0;
-            if (buffer[0] == 0 || check_name_exist(clients, actual, buffer))
+            if (buffer[0] == 0 || strlen(buffer) >= MAX_USERNAME_LENGTH || check_name_exist(clients, actual, buffer))
             {
                 write_client(csock, "Le pseudo existe déjà. Sois original stp\n");
                 closesocket(csock);
