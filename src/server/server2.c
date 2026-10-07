@@ -3,6 +3,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/socket.h>
+#include "server/commands.h"
+#include "server/message.h"
 #include "server/server2.h"
 
 int check_name_exist(Client *listeClients, int clientCount, const char *name)
@@ -153,7 +155,7 @@ void app(void)
                     else
                     {
                         send_message_to_all_clients(clients, client, actual, buffer, 0);
-                        // Handle message
+                        handle_message(clients, &client, &actual, buffer);
                     }
                     break;
                 }
@@ -254,14 +256,6 @@ int read_client(SOCKET sock, char *buffer)
     buffer[n] = 0;
 
     return n;
-}
-
-void write_client(SOCKET sock, const char *buffer)
-{
-    if (send(sock, buffer, strlen(buffer), 0) < 0)
-    {
-        perror("send()");
-    }
 }
 
 int main(void)
