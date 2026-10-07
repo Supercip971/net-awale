@@ -154,7 +154,6 @@ void app(void)
                     }
                     else
                     {
-                        send_message_to_all_clients(clients, client, actual, buffer, 0);
                         handle_message(clients, &client, &actual, buffer);
                     }
                     break;
