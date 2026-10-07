@@ -62,7 +62,7 @@ $(OBJ_DIR)/%.o: $(SRC_DIR)/%.c
 	@$(CC) $(CFLAGS) -MMD -MP $< -c -o $@
 
 client: $(OUTPUT_CLIENT)
-	@$(OUTPUT_CLIENT)
+	@$(OUTPUT_CLIENT) $(ARGS)
 
 server: $(OUTPUT_SERVER)
 	@$(OUTPUT_SERVER)
