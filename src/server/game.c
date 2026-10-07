@@ -23,14 +23,14 @@ int play(Game *game, int player, int hole, int *capturedSeeds)
     *capturedSeeds = 0;
     // check if the hole is valid
     if (hole < 0 || hole > 5)
-        return;
+        return 0;
 
     int start = hole + player * 6;
     int opp = 1 - player;
 
     // check if the player has seeds in the hole
     if (game->board[start] == 0)
-        return;
+        return 0;
 
     Game simulation = *game;
     int seeds = simulation.board[start];

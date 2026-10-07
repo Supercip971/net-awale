@@ -5,6 +5,18 @@
 #include <sys/socket.h>
 #include "server/server2.h"
 
+int check_name_exist(Client *listeClients, int clientCount, const char *name)
+{
+    for (int i = 0; i < clientCount; ++i)
+    {
+        if (strcmp(listeClients[i].name, name) == 0)
+        {
+            return 1;
+        }
+    }
+    return 0;
+}
+
 void init(void)
 {
 #ifdef WIN32
@@ -78,10 +90,28 @@ void app(void)
                 continue;
             }
 
+            if (actual >= MAX_CLIENTS)
+            {
+                printf("Serveur plein CLAMERD");
+                write_client(csock, "Serveur plein.\n");
+                closesocket(csock);
+                continue;
+            }
+
             /* after connecting the client sends its name */
-            if (read_client(csock, buffer) == -1)
+            if (read_client(csock, buffer) <= 0)
             {
                 /* disconnected */
+                closesocket(csock);
+                continue;
+            }
+
+            // On enlève les \r et \n des pseudos
+            buffer[strcspn(buffer, "\r\n")] = 0;
+            if (buffer[0] == 0 || check_name_exist(clients, actual, buffer))
+            {
+                write_client(csock, "Le pseudo existe déjà. Sois original stp\n");
+                closesocket(csock);
                 continue;
             }
 
@@ -91,7 +121,7 @@ void app(void)
             FD_SET(csock, &rdfs);
 
             Client c = {.sock = csock};
-            strncpy(c.name, buffer, BUF_SIZE - 1);
+            strncpy(c.name, buffer, sizeof(c.name) - 1);
             clients[actual] = c;
             actual++;
         }
@@ -109,13 +139,21 @@ void app(void)
                     {
                         closesocket(clients[i].sock);
                         remove_client(clients, i, &actual);
+
+                        max = sock;
+                        for (int j = 0; j < actual; j++)
+                            if (clients[j].sock > max)
+                                max = clients[j].sock;
+
                         strncpy(buffer, client.name, BUF_SIZE - 1);
+                        buffer[BUF_SIZE - 1] = 0;
                         strncat(buffer, " disconnected !", BUF_SIZE - strlen(buffer) - 1);
                         send_message_to_all_clients(clients, client, actual, buffer, 1);
                     }
                     else
                     {
                         send_message_to_all_clients(clients, client, actual, buffer, 0);
+                        // Handle message
                     }
                     break;
                 }
@@ -129,8 +167,7 @@ void app(void)
 
 void clear_clients(Client *clients, int actual)
 {
-    int i = 0;
-    for (i = 0; i < actual; i++)
+    for (int i = 0; i < actual; i++)
     {
         closesocket(clients[i].sock);
     }
@@ -146,17 +183,17 @@ void remove_client(Client *clients, int to_remove, int *actual)
 
 void send_message_to_all_clients(Client *clients, Client sender, int actual, const char *buffer, char from_server)
 {
-    int i = 0;
     char message[BUF_SIZE];
-    message[0] = 0;
-    for (i = 0; i < actual; i++)
+    for (int i = 0; i < actual; i++)
     {
+        message[0] = 0;
         /* we don't send message to the sender */
         if (sender.sock != clients[i].sock)
         {
             if (from_server == 0)
             {
                 strncpy(message, sender.name, BUF_SIZE - 1);
+                message[BUF_SIZE - 1] = 0;
                 strncat(message, " : ", sizeof message - strlen(message) - 1);
             }
             strncat(message, buffer, sizeof message - strlen(message) - 1);
@@ -175,6 +212,9 @@ int init_connection(void)
         perror("socket()");
         exit(errno);
     }
+
+    int opt = 1;
+    setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, (const char *)&opt, sizeof opt);
 
     sin.sin_addr.s_addr = htonl(INADDR_ANY);
     sin.sin_port = htons(PORT);
@@ -221,7 +261,6 @@ void write_client(SOCKET sock, const char *buffer)
     if (send(sock, buffer, strlen(buffer), 0) < 0)
     {
         perror("send()");
-        exit(errno);
     }
 }
 
