@@ -8,6 +8,8 @@ void gameInit(Game *game)
     // 4 seed per hole
     for (int i = 0; i < 12; i++)
         game->board[i] = 4;
+
+    game->status = WAITING;
 }
 
 static int sideSum(const Game *g, int side)

@@ -5,7 +5,9 @@
 #include <sys/socket.h>
 #include "server/commands.h"
 #include "server/message.h"
+#include "server/models/games.h"
 #include "server/server2.h"
+#include "shared/game.h"
 
 int check_name_exist(Client *listeClients, int clientCount, const char *name)
 {
@@ -48,6 +50,7 @@ void app(void)
     int max = sock;
     /* an array for all clients */
     Client clients[MAX_CLIENTS];
+    Games games = {0};
 
     fd_set rdfs;
 
@@ -154,7 +157,7 @@ void app(void)
                     }
                     else
                     {
-                        handle_message(clients, &client, &actual, buffer);
+                        handle_message(clients, &client, &actual, buffer, &games);
                     }
                     break;
                 }
@@ -162,6 +165,7 @@ void app(void)
         }
     }
 
+    free(games.games);
     clear_clients(clients, actual);
     end_connection(sock);
 }
