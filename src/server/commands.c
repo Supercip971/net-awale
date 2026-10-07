@@ -1,6 +1,6 @@
 #include "server/commands.h"
 
-int checkDefy(Client **adversaire, int clientsCount, char pseudo[MAX_USERNAME_LENGTH], Client *listeClients, Client *client, Games *games, int decline)
+int checkDefy(Client **adversaire, int clientsCount, char pseudo[MAX_USERNAME_LENGTH], Client *listeClients, Client *client)
 {
     for (int i = 0; i < clientsCount; ++i)
     {
@@ -14,37 +14,6 @@ int checkDefy(Client **adversaire, int clientsCount, char pseudo[MAX_USERNAME_LE
     {
         write_client(client->sock, "Cki?\n");
         return 0;
-    }
-
-    // Check if defier is already in game
-    for (int i = 0; i < games->count; ++i)
-    {
-        if (games->games[i].status == IN_GAME &&
-            (strcmp(games->games[i].playerNames[0], (*adversaire)->name) == 0 ||
-             strcmp(games->games[i].playerNames[1], (*adversaire)->name) == 0))
-        {
-            write_client(client->sock, "Il est déjà en game, attends ton tour\n");
-            return 0;
-        }
-        if (decline)
-            continue;
-        if (games->games[i].status == WAITING &&
-            strcmp(games->games[i].playerNames[0], (*adversaire)->name) == 0 &&
-            strcmp(games->games[i].playerNames[1], client->name) == 0)
-        {
-            write_client(client->sock, "Il t'a déjà défié, accepte ou refuse\n");
-            return 0;
-        }
-        // L'initiateur de la demande est toujours à l'index 0
-        if (
-            (games->games[i].status == WAITING && strcmp(games->games[i].playerNames[0], client->name) == 0) ||
-            (games->games[i].status == IN_GAME &&
-             (strcmp(games->games[i].playerNames[0], client->name) == 0 ||
-              strcmp(games->games[i].playerNames[1], client->name) == 0)))
-        {
-            write_client(client->sock, "T'es déjà en game frérot, essaie déjà de gagner celle là sale fou\n");
-            return 0;
-        }
     }
     return 1;
 }
@@ -83,8 +52,37 @@ void handle_message(Client *listeClients, Client *client, int *clientsCount, cha
     case MSG_DEFY:
     {
         Client *adversaire = NULL;
-        if (!checkDefy(&adversaire, *clientsCount, message.defy.pseudo, listeClients, client, games, 0))
+        if (!checkDefy(&adversaire, *clientsCount, message.defy.pseudo, listeClients, client))
             return;
+
+        // Check if defier is already in game
+        for (int i = 0; i < games->count; ++i)
+        {
+            if (games->games[i].status == IN_GAME &&
+                (strcmp(games->games[i].playerNames[0], (adversaire)->name) == 0 ||
+                 strcmp(games->games[i].playerNames[1], (adversaire)->name) == 0))
+            {
+                write_client(client->sock, "Il est déjà en game, attends ton tour\n");
+                return;
+            }
+            if (games->games[i].status == WAITING &&
+                strcmp(games->games[i].playerNames[0], (adversaire)->name) == 0 &&
+                strcmp(games->games[i].playerNames[1], client->name) == 0)
+            {
+                write_client(client->sock, "Il t'a déjà défié, accepte ou refuse\n");
+                return;
+            }
+            // L'initiateur de la demande est toujours à l'index 0
+            if (
+                (games->games[i].status == WAITING && strcmp(games->games[i].playerNames[0], client->name) == 0) ||
+                (games->games[i].status == IN_GAME &&
+                 (strcmp(games->games[i].playerNames[0], client->name) == 0 ||
+                  strcmp(games->games[i].playerNames[1], client->name) == 0)))
+            {
+                write_client(client->sock, "T'es déjà en game frérot, essaie déjà de gagner celle là sale fou\n");
+                return;
+            }
+        }
 
         Game newGame = {0};
         gameInit(&newGame);
@@ -107,7 +105,7 @@ void handle_message(Client *listeClients, Client *client, int *clientsCount, cha
     case MSG_DECLINE_DEFY:
     {
         Client *adversaire = NULL;
-        if (!checkDefy(&adversaire, *clientsCount, message.declineDefy.pseudo, listeClients, client, games, 1))
+        if (!checkDefy(&adversaire, *clientsCount, message.declineDefy.pseudo, listeClients, client))
             return;
 
         // Vu qu'on a qu'une seule game par joueur, on peut supprimer que le premier qu'on trouve
@@ -135,6 +133,58 @@ void handle_message(Client *listeClients, Client *client, int *clientsCount, cha
         strncat(invitation, client->name, sizeof invitation - strlen(invitation) - 1);
         strncat(invitation, " a trop peur, il a refusé\n", sizeof invitation - strlen(invitation) - 1);
         write_client(adversaire->sock, invitation);
+        break;
+    }
+    case MSG_ACCEPT_DEFY:
+    {
+        Client *adversaire = NULL;
+        if (!checkDefy(&adversaire, *clientsCount, message.declineDefy.pseudo, listeClients, client))
+            return;
+
+        // Check if defier is already in game
+        for (int i = 0; i < games->count; ++i)
+        {
+            if (games->games[i].status == IN_GAME &&
+                (strcmp(games->games[i].playerNames[0], (adversaire)->name) == 0 ||
+                 strcmp(games->games[i].playerNames[1], (adversaire)->name) == 0))
+            {
+                write_client(client->sock, "Il est déjà en game, attends ton tour\n");
+                return;
+            }
+            // L'initiateur de la demande est toujours à l'index 0
+            if (
+                (games->games[i].status == WAITING && strcmp(games->games[i].playerNames[0], client->name) == 0) ||
+                (games->games[i].status == IN_GAME &&
+                 (strcmp(games->games[i].playerNames[0], client->name) == 0 ||
+                  strcmp(games->games[i].playerNames[1], client->name) == 0)))
+            {
+                write_client(client->sock, "T'es déjà en game frérot, essaie déjà de gagner celle là sale fou\n");
+                return;
+            }
+        }
+
+        // Vu qu'on a qu'une seule game par joueur, on peut supprimer que le premier qu'on trouve
+        Game *game = NULL;
+        for (int i = 0; i < games->count; ++i)
+        {
+            if (games->games[i].status != WAITING)
+                continue;
+            if ((strcmp(games->games[i].playerNames[0], adversaire->name) == 0 &&
+                 strcmp(games->games[i].playerNames[1], client->name) == 0))
+            {
+                game = &(games->games[i]);
+                break;
+            }
+        }
+        if (game == NULL)
+        {
+            write_client(client->sock, "Tu acceptes quoi là frr ? personne t'a défié retourne dodo.\n");
+            return;
+        }
+        game->status = IN_GAME;
+        char board[BUF_SIZE] = {0};
+        write_client(adversaire->sock, printGame(game, board));
+        write_client(client->sock, printGame(game, board));
         break;
     }
     default:

@@ -113,3 +113,25 @@ GameStatus gameStatus(Game *game, int nextPlayer)
 
     return GAME_ONGOING;
 }
+
+char *printGame(Game *game, char board[BUF_SIZE])
+{
+    char *p = board;
+    p += sprintf(p, "Grenier du joueur 1: %d\n\n", game->hands[0]);
+    p += sprintf(p, "*-----------------------------------------------------------------------------------------------*\n"
+                    "|                                                                                               |\n");
+    for (int i = 0; i < 12; i++)
+    {
+        p += sprintf(p, "|\t%2d\t", game->board[i]);
+        if (i == 5)
+            p += sprintf(p, "|\n"
+                            "|                                                                                               |\n"
+                            "*-----------------------------------------------------------------------------------------------*\n"
+                            "|                                                                                               |\n");
+    }
+    p += sprintf(p, "|\n");
+    p += sprintf(p, "|                                                                                               |\n"
+                    "*-----------------------------------------------------------------------------------------------*\n");
+    p += sprintf(p, "\nGrenier du joueur 2: %d\n", game->hands[1]);
+    return board;
+}
