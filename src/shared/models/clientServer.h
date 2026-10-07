@@ -3,7 +3,6 @@
 
 typedef enum { MSG_CONNECT, MSG_PLAYERS, MSG_PLAY, MSG_DEFY, MSG_ACCEPT_DEFY, MSG_DECLINE_DEFY } MsgType;
 
-
 typedef struct {
     MsgType kind;
     union {
