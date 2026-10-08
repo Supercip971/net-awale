@@ -59,6 +59,15 @@ int parse_message(const char *buffer, ClientServerMessage *msg)
         strncpy(msg->acceptDefy.pseudo, arg, sizeof msg->acceptDefy.pseudo - 1);
         msg->acceptDefy.pseudo[sizeof msg->acceptDefy.pseudo - 1] = 0;
     }
+    else if (strcmp(command, "setbio") == 0)
+    {
+        char *space = strchr(buffer, ' ');
+        if (space == NULL || space[1] == 0)
+            return -1;
+        msg->kind = MSG_SETBIO;
+        strncpy(msg->setbio.bio, space + 1, sizeof msg->setbio.bio - 1);
+        msg->setbio.bio[sizeof msg->setbio.bio - 1] = 0;
+    }
     else
         return -1;
     return 0;

@@ -9,7 +9,8 @@ typedef enum
     MSG_DEFY,
     MSG_ACCEPT_DEFY,
     MSG_DECLINE_DEFY,
-    MSG_MESSAGE
+    MSG_MESSAGE,
+    MSG_SETBIO
 } MsgType;
 
 typedef struct
@@ -40,5 +41,9 @@ typedef struct
         {
             char message[BUF_SIZE - 9];
         } message;
+        struct
+        {
+            char bio[BUF_SIZE - 7];
+        } setbio;
     };
 } ClientServerMessage;

@@ -278,6 +278,11 @@ void handle_message(Client *listeClients, Client *client, int *clientsCount, cha
         }
         break;
     }
+    case MSG_SETBIO:
+    {
+        // TODO: Save bio in persistence
+        break;
+    }
     default:
         break;
     }
