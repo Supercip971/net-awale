@@ -10,6 +10,8 @@ void gameInit(Game *game)
         game->board[i] = 4;
 
     game->status = WAITING;
+    int randomIndex = rand() % 2;
+    game->currentPlayer = randomIndex;
 }
 
 static int sideSum(const Game *g, int side)
@@ -132,6 +134,6 @@ char *printGame(Game *game, char board[BUF_SIZE])
     p += sprintf(p, "|\n");
     p += sprintf(p, "|                                                                                               |\n"
                     "*-----------------------------------------------------------------------------------------------*\n");
-    p += sprintf(p, "\nGrenier du joueur 2: %d\n", game->hands[1]);
+    p += sprintf(p, "\nGrenier du joueur 2: %d\n\nAu tour de %s de jouer !", game->hands[1], game->playerNames[game->currentPlayer]);
     return board;
 }

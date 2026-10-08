@@ -244,6 +244,11 @@ void handle_message(Client *listeClients, Client *client, int *clientsCount, cha
         {
             currentPlayerIndex = 1;
         }
+        if (currentPlayerIndex != game->currentPlayer)
+        {
+            write_client(client->sock, "Chill bro, laisse le jouer le pauvre.\n");
+            return;
+        }
         if (play(game, currentPlayerIndex, message.play.hole, &capturedSeeds))
         {
             game->currentPlayer = game->currentPlayer ? 0 : 1;
