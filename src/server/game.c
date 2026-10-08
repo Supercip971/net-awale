@@ -123,21 +123,31 @@ char *printGame(Game *game, char board[BUF_SIZE])
     char player2Name[MAX_USERNAME_LENGTH] = {0};
     strncpy(player1Name, game->playerNames[0], sizeof player1Name - 1);
     strncpy(player2Name, game->playerNames[1], sizeof player2Name - 1);
-    p += sprintf(p, "Grenier du joueur 1 (%s): %d\n\n", player1Name, game->hands[0]);
-    p += sprintf(p, "*-----------------------------------------------------------------------------------------------*\n"
-                    "|                                                                                               |\n");
-    for (int i = 0; i < 12; i++)
+    p += sprintf(p, "Grenier du joueur 1 (%s): %d\n\n"
+                    "\n"
+                    "\t 0\t\t 1\t\t 2\t\t 3\t\t 4\t\t 5\t\n"
+                    "\n"
+                    "*-----------------------------------------------------------------------------------------------*\n"
+                    "|                                                                                               |\n",
+                 player1Name, game->hands[0]);
+    for (int i = 0; i < 6; i++)
     {
         p += sprintf(p, "|\t%2d\t", game->board[i]);
-        if (i == 5)
-            p += sprintf(p, "|\n"
-                            "|                                                                                               |\n"
-                            "*-----------------------------------------------------------------------------------------------*\n"
-                            "|                                                                                               |\n");
     }
-    p += sprintf(p, "|\n");
-    p += sprintf(p, "|                                                                                               |\n"
-                    "*-----------------------------------------------------------------------------------------------*\n");
+    p += sprintf(p, "|\n"
+                    "|                                                                                               |\n"
+                    "*-----------------------------------------------------------------------------------------------*\n"
+                    "|                                                                                               |\n");
+    for (int i = 11; i >= 6; --i)
+    {
+        p += sprintf(p, "|\t%2d\t", game->board[i]);
+    }
+    p += sprintf(p, "|\n"
+                    "|                                                                                               |\n"
+                    "*-----------------------------------------------------------------------------------------------*\n"
+                    "\n"
+                    "\t 5\t\t 4\t\t 3\t\t 2\t\t 1\t\t 0\t\n"
+                    "\n");
     p += sprintf(p, "\nGrenier du joueur 2 (%s): %d\n\nAu tour de %s de jouer !", player2Name, game->hands[1], game->playerNames[game->currentPlayer]);
     return board;
 }
