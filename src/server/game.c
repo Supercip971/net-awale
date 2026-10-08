@@ -119,7 +119,11 @@ GameStatus gameStatus(Game *game, int nextPlayer)
 char *printGame(Game *game, char board[BUF_SIZE])
 {
     char *p = board;
-    p += sprintf(p, "Grenier du joueur 1: %d\n\n", game->hands[0]);
+    char player1Name[MAX_USERNAME_LENGTH] = {0};
+    char player2Name[MAX_USERNAME_LENGTH] = {0};
+    strncpy(player1Name, game->playerNames[0], sizeof player1Name - 1);
+    strncpy(player2Name, game->playerNames[1], sizeof player2Name - 1);
+    p += sprintf(p, "Grenier du joueur 1 (%s): %d\n\n", player1Name, game->hands[0]);
     p += sprintf(p, "*-----------------------------------------------------------------------------------------------*\n"
                     "|                                                                                               |\n");
     for (int i = 0; i < 12; i++)
@@ -134,6 +138,6 @@ char *printGame(Game *game, char board[BUF_SIZE])
     p += sprintf(p, "|\n");
     p += sprintf(p, "|                                                                                               |\n"
                     "*-----------------------------------------------------------------------------------------------*\n");
-    p += sprintf(p, "\nGrenier du joueur 2: %d\n\nAu tour de %s de jouer !", game->hands[1], game->playerNames[game->currentPlayer]);
+    p += sprintf(p, "\nGrenier du joueur 2 (%s): %d\n\nAu tour de %s de jouer !", player2Name, game->hands[1], game->playerNames[game->currentPlayer]);
     return board;
 }
