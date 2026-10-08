@@ -1,6 +1,6 @@
 #include "server/commands.h"
 
-int checkDefy(Client **adversaire, int clientsCount, char pseudo[MAX_USERNAME_LENGTH], Client *listeClients, Client *client)
+int checkOpponent(Client **adversaire, int clientsCount, char pseudo[MAX_USERNAME_LENGTH], Client *listeClients, Client *client)
 {
     for (int i = 0; i < clientsCount; ++i)
     {
@@ -13,6 +13,43 @@ int checkDefy(Client **adversaire, int clientsCount, char pseudo[MAX_USERNAME_LE
     if (*adversaire == NULL || (*adversaire)->sock == client->sock)
     {
         write_client(client->sock, "Cki?\n");
+        return 0;
+    }
+    return 1;
+}
+
+int findOpponentNameAndGame(Client **adversaire, int clientsCount, Client *listeClients, Games *games, Client *client, Game **game)
+{
+    char opponentName[MAX_USERNAME_LENGTH] = {0};
+    for (int i = 0; i < games->count; ++i)
+    {
+        if (games->games[i].status != IN_GAME)
+            continue;
+        if (strcmp(games->games[i].playerNames[0], client->name) == 0)
+        {
+            strncpy(opponentName, games->games[i].playerNames[1], sizeof opponentName - 1);
+            *game = &(games->games[i]);
+        }
+        else if (strcmp(games->games[i].playerNames[1], client->name) == 0)
+        {
+            strncpy(opponentName, games->games[i].playerNames[0], sizeof opponentName - 1);
+            *game = &(games->games[i]);
+        }
+    }
+    if (opponentName[0] == 0)
+    {
+        return 0;
+    }
+    for (int i = 0; i < clientsCount; ++i)
+    {
+        if (strcmp(listeClients[i].name, opponentName) == 0)
+        {
+            *adversaire = &listeClients[i];
+            break;
+        }
+    }
+    if (*adversaire == NULL || (*adversaire)->sock == client->sock)
+    {
         return 0;
     }
     return 1;
@@ -52,7 +89,7 @@ void handle_message(Client *listeClients, Client *client, int *clientsCount, cha
     case MSG_DEFY:
     {
         Client *adversaire = NULL;
-        if (!checkDefy(&adversaire, *clientsCount, message.defy.pseudo, listeClients, client))
+        if (!checkOpponent(&adversaire, *clientsCount, message.defy.pseudo, listeClients, client))
             return;
 
         // Check if defier is already in game
@@ -105,7 +142,7 @@ void handle_message(Client *listeClients, Client *client, int *clientsCount, cha
     case MSG_DECLINE_DEFY:
     {
         Client *adversaire = NULL;
-        if (!checkDefy(&adversaire, *clientsCount, message.declineDefy.pseudo, listeClients, client))
+        if (!checkOpponent(&adversaire, *clientsCount, message.declineDefy.pseudo, listeClients, client))
             return;
 
         // Vu qu'on a qu'une seule game par joueur, on peut supprimer que le premier qu'on trouve
@@ -138,7 +175,7 @@ void handle_message(Client *listeClients, Client *client, int *clientsCount, cha
     case MSG_ACCEPT_DEFY:
     {
         Client *adversaire = NULL;
-        if (!checkDefy(&adversaire, *clientsCount, message.declineDefy.pseudo, listeClients, client))
+        if (!checkOpponent(&adversaire, *clientsCount, message.declineDefy.pseudo, listeClients, client))
             return;
 
         // Check if defier is already in game
@@ -163,7 +200,7 @@ void handle_message(Client *listeClients, Client *client, int *clientsCount, cha
             }
         }
 
-        // Vu qu'on a qu'une seule game par joueur, on peut supprimer que le premier qu'on trouve
+        // Vu qu'on a qu'une seule game par joueur, on peut récupérer que le premier qu'on trouve
         Game *game = NULL;
         for (int i = 0; i < games->count; ++i)
         {
@@ -185,6 +222,39 @@ void handle_message(Client *listeClients, Client *client, int *clientsCount, cha
         char board[BUF_SIZE] = {0};
         write_client(adversaire->sock, printGame(game, board));
         write_client(client->sock, printGame(game, board));
+        break;
+    }
+    case MSG_PLAY:
+    {
+        Client *adversaire = NULL;
+        Game *game = NULL;
+        if (!findOpponentNameAndGame(&adversaire, *clientsCount, listeClients, games, client, &game))
+        {
+            write_client(client->sock, "T'es tout seul frérot, va défier quelqu'un.\n");
+            return;
+        }
+        if (game == NULL)
+        {
+            write_client(client->sock, "Tu fais quoi ???? lance une game avant de jouer peut-être ?.\n");
+            return;
+        }
+        int capturedSeeds = 0;
+        int currentPlayerIndex = 0;
+        if (strcmp(game->playerNames[1], client->name) == 0)
+        {
+            currentPlayerIndex = 1;
+        }
+        if (play(game, currentPlayerIndex, message.play.hole, &capturedSeeds))
+        {
+            game->currentPlayer = game->currentPlayer ? 0 : 1;
+            char board[BUF_SIZE] = {0};
+            write_client(adversaire->sock, printGame(game, board));
+            write_client(client->sock, printGame(game, board));
+        }
+        else
+        {
+            write_client(client->sock, "Joue bien, frr respecte les règle un moment.\n");
+        }
         break;
     }
     default:
