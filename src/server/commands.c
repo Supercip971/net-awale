@@ -255,6 +255,22 @@ void handle_message(Client *listeClients, Client *client, int *clientsCount, cha
             char board[BUF_SIZE] = {0};
             write_client(adversaire->sock, printGame(game, board));
             write_client(client->sock, printGame(game, board));
+            GameStatus result = gameStatus(game, game->currentPlayer);
+            if (result == GAME_WIN_P0)
+            {
+                write_client(adversaire->sock, "T'as gagné frérot, gg.\n");
+                write_client(client->sock, "T'as perdu frérot, laonte.\n");
+            }
+            else if (result == GAME_WIN_P1)
+            {
+                write_client(adversaire->sock, "T'as perdu frérot, laonte.\n");
+                write_client(client->sock, "T'as gagné frérot, gg.\n");
+            }
+            else if (result == GAME_DRAW)
+            {
+                write_client(adversaire->sock, "Egalité frérot, nul.\n");
+                write_client(client->sock, "Egalité frérot, nul.\n");
+            }
         }
         else
         {
