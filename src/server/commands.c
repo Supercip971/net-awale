@@ -258,18 +258,30 @@ void handle_message(Client *listeClients, Client *client, int *clientsCount, cha
             GameStatus result = gameStatus(game, game->currentPlayer);
             if (result == GAME_WIN_P0)
             {
-                write_client(adversaire->sock, "T'as gagné frérot, gg.\n");
-                write_client(client->sock, "T'as perdu frérot, laonte.\n");
+                write_client(adversaire->sock, "\nT'as gagné frérot, gg.\n");
+                write_client(client->sock, "\nT'as perdu frérot, laonte.\n");
             }
             else if (result == GAME_WIN_P1)
             {
-                write_client(adversaire->sock, "T'as perdu frérot, laonte.\n");
-                write_client(client->sock, "T'as gagné frérot, gg.\n");
+                write_client(adversaire->sock, "\nT'as perdu frérot, laonte.\n");
+                write_client(client->sock, "\nT'as gagné frérot, gg.\n");
             }
             else if (result == GAME_DRAW)
             {
-                write_client(adversaire->sock, "Egalité frérot, nul.\n");
-                write_client(client->sock, "Egalité frérot, nul.\n");
+                write_client(adversaire->sock, "\nEgalité frérot, nul.\n");
+                write_client(client->sock, "\nEgalité frérot, nul.\n");
+            }
+            if (result != GAME_ONGOING)
+            {
+                for (int i = 0; i < games->count; ++i)
+                {
+                    if (&(games->games[i]) == game)
+                    {
+                        vec_splice_((char **)&games->games, &games->count, &games->capacity, sizeof(Game), i, 1);
+                        --games->count;
+                        break;
+                    }
+                }
             }
         }
         else
