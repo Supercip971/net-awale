@@ -28,3 +28,5 @@ int hasLegalMove(const Game *game, int player);
 GameStatus gameStatus(Game *game, int nextPlayer);
 
 char *printGame(Game *game, char board[BUF_SIZE]);
+
+char *displayGame(Game *game, char *response, size_t size);

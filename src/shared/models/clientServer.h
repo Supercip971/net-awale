@@ -5,6 +5,7 @@ typedef enum
 {
     MSG_CONNECT,
     MSG_PLAYERS,
+    MSG_GAMES,
     MSG_PLAY,
     MSG_DEFY,
     MSG_ACCEPT_DEFY,
@@ -21,6 +22,9 @@ typedef struct
         struct
         {
         } players;
+        struct
+        {
+        } games;
         struct
         {
             int hole;

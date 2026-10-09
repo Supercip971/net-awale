@@ -17,7 +17,13 @@ int parse_message(const char *buffer, ClientServerMessage *msg)
         return -1;
 
     if (strcmp(command, "players") == 0)
+    {
         msg->kind = MSG_PLAYERS;
+    }
+    else if (strcmp(command, "games") == 0)
+    {
+        msg->kind = MSG_GAMES;
+    }
     else if (strcmp(command, "play") == 0)
     {
         msg->kind = MSG_PLAY;

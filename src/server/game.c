@@ -151,3 +151,11 @@ char *printGame(Game *game, char board[BUF_SIZE])
     p += sprintf(p, "\nGrenier du joueur 2 (%s): %d\n\nAu tour de %s de jouer !", player2Name, game->hands[1], game->playerNames[game->currentPlayer]);
     return board;
 }
+
+char *displayGame(Game *game, char *response, size_t size)
+{
+    strncat(response, game->playerNames[0], size - strlen(response) - 1);
+    strncat(response, " VS ", size - strlen(response) - 1);
+    strncat(response, game->playerNames[1], size - strlen(response) - 1);
+    return response;
+}

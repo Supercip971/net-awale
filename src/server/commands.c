@@ -67,6 +67,30 @@ void msg_players(Client *listeClients, Client *client, int *clientsCount)
     write_client(client->sock, response);
 }
 
+void msg_games(Games *games, Client *client)
+{
+    unsigned int runningGamesCount = 0;
+    char response[BUF_SIZE] = "Liste des COMBATS DE TITANS :\n";
+    for (int i = 0; i < games->count; ++i)
+    {
+        if (games->games[i].status != IN_GAME)
+            continue;
+        char gameDisplay[BUF_SIZE] = {0};
+        displayGame(&(games->games[i]), gameDisplay, sizeof gameDisplay);
+        strncat(response, "- ", sizeof response - strlen(response) - 1);
+        strncat(response, gameDisplay, sizeof response - strlen(response) - 1);
+        strncat(response, "\n", sizeof response - strlen(response) - 1);
+        ++runningGamesCount;
+    }
+    if (!runningGamesCount)
+    {
+        char noGameResponse[BUF_SIZE] = "Aucun combat de titan. Lances-en un dcp stp\n";
+        write_client(client->sock, noGameResponse);
+        return;
+    }
+    write_client(client->sock, response);
+}
+
 void msg_message(Client *listeClients, Client *client, int *clientsCount, ClientServerMessage *message)
 {
     send_message_to_all_clients(listeClients, *client, *clientsCount, message->message.message, 0);
@@ -295,6 +319,9 @@ void handle_message(Client *listeClients, Client *client, int *clientsCount, cha
     {
     case MSG_PLAYERS:
         msg_players(listeClients, client, clientsCount);
+        break;
+    case MSG_GAMES:
+        msg_games(games, client);
         break;
     case MSG_MESSAGE:
         msg_message(listeClients, client, clientsCount, &message);
