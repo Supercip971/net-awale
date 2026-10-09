@@ -111,7 +111,6 @@ void handle_message(Client *listeClients, Client *client, int *clientsCount, cha
             }
             // L'initiateur de la demande est toujours à l'index 0
             if (
-                (games->games[i].status == WAITING && strcmp(games->games[i].playerNames[0], client->name) == 0) ||
                 (games->games[i].status == IN_GAME &&
                  (strcmp(games->games[i].playerNames[0], client->name) == 0 ||
                   strcmp(games->games[i].playerNames[1], client->name) == 0)))
