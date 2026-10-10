@@ -25,6 +25,8 @@ void decode_json(cJSON *players)
         strncpy(p.name, cJSON_GetObjectItem(player, "name")->valuestring, MAX_USERNAME_LENGTH);
         strncpy(p.bio, cJSON_GetObjectItem(player, "bio")->valuestring, MAX_BIO_LENGTH);
         p.rank = cJSON_GetObjectItem(player, "rank")->valueint;
+
+        vec_push(&memory_db, p);
     }
 
     printf("loaded %d players\n", cJSON_GetArraySize(players));
