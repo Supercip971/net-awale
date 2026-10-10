@@ -1,4 +1,5 @@
 #pragma once
+#include "server/player.h"
 #include "shared/models/const.h"
 
 typedef enum
@@ -13,9 +14,9 @@ typedef struct Game
     // player 2: last 6
     int board[12];
     int hands[2];
-    int currentPlayer;                        // 0 for player 1, 1 for player 2
-    char playerNames[2][MAX_USERNAME_LENGTH]; // player names
-    char spectatorNames[MAX_SPECTATORS][MAX_USERNAME_LENGTH];
+    int currentPlayer; // 0 for player 1, 1 for player 2
+    PlayerId players[2];
+    PlayerId spectators[MAX_SPECTATORS];
     int spectatorsCount;
     GAME_STATUS status;
 } Game;

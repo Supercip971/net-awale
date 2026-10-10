@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "server/models/games.h"
+#include "server/player.h"
 #include "shared/game.h"
 #include "shared/vec.h"
 
@@ -9,44 +10,54 @@
 
 int checkOpponent(Client **adversaire, int clientsCount, char pseudo[MAX_USERNAME_LENGTH], Client *listeClients, Client *client)
 {
-    for (int i = 0; i < clientsCount; ++i)
-    {
-        if (strcmp(listeClients[i].name, pseudo) == 0)
-        {
-            *adversaire = &listeClients[i];
-            break;
-        }
-    }
-    if (*adversaire == NULL || (*adversaire)->sock == client->sock)
+    Player *player = find_player_by_name(pseudo);
+
+    if (player == NULL)
     {
         write_client(client->sock, "Cki?\n");
         return 0;
     }
-    return 1;
+
+    if (player->user_id == client->player)
+    {
+        write_client(client->sock, "Cki?\n");
+        return 0;
+    }
+
+    for (int i = 0; i < clientsCount; ++i)
+    {
+        if (listeClients[i].player == player->user_id)
+        {
+            *adversaire = &listeClients[i];
+            return 1;
+        }
+    }
+
+    write_client(client->sock, "Il n'est pas en ligne\n");
+    return 0;
 }
 
-Game* find_game(Games *games, char player[MAX_USERNAME_LENGTH])
+Game* find_game(Games *games, PlayerId player)
 {
     for (int i = 0; i < games->length; ++i)
     {
         Game* cur = &games->data[i];
         if (cur->status != IN_GAME)
             continue;
-        if ((strcmp(cur->playerNames[0], player) == 0 ||
-             strcmp(cur->playerNames[1], player) == 0))
-        {
 
+        if (cur->players[0] == player || cur->players[1] == player)
+        {
             return cur;
         }
     }
     return NULL;
 }
 
-int is_player_spectating_this_game(Game *game, char playerName[MAX_USERNAME_LENGTH])
+int is_player_spectating_this_game(Game *game, PlayerId player)
 {
     for (int i = 0; i < game->spectatorsCount; ++i)
     {
-        if (strcmp(game->spectatorNames[i], playerName) == 0)
+        if (game->spectators[i] == player)
         {
             return 1;
         }
@@ -54,11 +65,11 @@ int is_player_spectating_this_game(Game *game, char playerName[MAX_USERNAME_LENG
     return 0;
 }
 
-Game* is_player_spectating_a_game(Games *games, char playerName[MAX_USERNAME_LENGTH])
+Game* is_player_spectating_a_game(Games *games, PlayerId player)
 {
     for (int i = 0; i < games->length; ++i)
     {
-        if (is_player_spectating_this_game(&(games->data[i]), playerName))
+        if (is_player_spectating_this_game(&(games->data[i]), player))
         {
             return &games->data[i];
         }
@@ -68,30 +79,32 @@ Game* is_player_spectating_a_game(Games *games, char playerName[MAX_USERNAME_LEN
 
 int findOpponentNameAndGame(Client **adversaire, int clientsCount, Client *listeClients, Games *games, Client *client, Game **res)
 {
-    char opponentName[MAX_USERNAME_LENGTH] = {0};
+    PlayerId opponent = INVALID_PLAYER_ID;
     for (int i = 0; i < games->length; ++i)
     {
         Game*  game = &games->data[i];
         if (game->status != IN_GAME)
             continue;
-        if (strcmp(game->playerNames[0], client->name) == 0)
+
+        if (game->players[0] == client->player)
         {
-            strncpy(opponentName, game->playerNames[1], sizeof opponentName - 1);
+            opponent = game->players[1];
             *res = game;
         }
-        else if (strcmp(game->playerNames[1], client->name) == 0)
+        else if (game->players[1] == client->player)
         {
-            strncpy(opponentName, game->playerNames[0], sizeof opponentName - 1);
+            opponent = game->players[0];
             *res = game;
         }
     }
-    if (opponentName[0] == 0)
+    if (opponent == INVALID_PLAYER_ID)
     {
         return 0;
     }
+
     for (int i = 0; i < clientsCount; ++i)
     {
-        if (strcmp(listeClients[i].name, opponentName) == 0)
+        if (listeClients[i].player == opponent)
         {
             *adversaire = &listeClients[i];
             break;
@@ -104,15 +117,14 @@ int findOpponentNameAndGame(Client **adversaire, int clientsCount, Client *liste
     return 1;
 }
 
-int is_player_in_game(Games *games, char name[MAX_USERNAME_LENGTH])
+int is_player_in_game(Games *games, PlayerId player)
 {
     for (int i = 0; i < games->length; ++i)
     {
         if (games->data[i].status != IN_GAME)
             continue;
-        if (
-            strcmp(games->data[i].playerNames[0], name) == 0 ||
-            strcmp(games->data[i].playerNames[1], name) == 0)
+
+        if (games->data[i].players[0] == player || games->data[i].players[1] == player)
         {
             return 1;
         }
@@ -126,7 +138,11 @@ void msg_players(Client *listeClients, Client *client, int clientsCount)
     size_t offset = strlen(response);
     for (int i = 0; i < clientsCount; ++i)
     {
-        int l =  snprintf(response + offset,  sizeof response - offset,"- %s\n", listeClients[i].name);
+        Player *player = find_player_by_id(listeClients[i].player);
+        const char *name = player ? player->name : "Anonyme(erroeur)";
+        int l = snprintf(response + offset, sizeof response - offset, "- %s\n", name);
+        if (l < 0 || (size_t)l >= sizeof response - offset)
+            break;
         offset += l;
     }
 
@@ -144,7 +160,10 @@ void msg_games(Games *games, Client *client)
             continue;
         char gameDisplay[BUF_SIZE] = {0};
         displayGame(&(games->data[i]), gameDisplay, sizeof gameDisplay);
-        offset += snprintf(response + offset, sizeof response - offset, "- %s\n", gameDisplay);
+        int l = snprintf(response + offset, sizeof response - offset, "- %s\n", gameDisplay);
+        if (l < 0 || (size_t)l >= sizeof response - offset)
+            break;
+        offset += l;
         ++runningGamesCount;
     }
     if (!runningGamesCount)
@@ -173,27 +192,25 @@ void msg_accept_defy(Client *listeClients, Client *client, int clientsCount, Gam
         // We do a pointer car copying a game is heavy
         Game* game = &games->data[i];
         if (game->status == IN_GAME &&
-            (strcmp(game->playerNames[0], (adversaire)->name) == 0 ||
-             strcmp(game->playerNames[1], (adversaire)->name) == 0))
+            (game->players[0] == adversaire->player || game->players[1] == adversaire->player))
         {
             write_client(client->sock, "Il est déjà en game, attends ton tour\n");
             return;
         }
         // L'initiateur de la demande est toujours à l'index 0
         if (
-            (game->status == WAITING && strcmp(game->playerNames[0], client->name) == 0) ||
+            (game->status == WAITING && game->players[0] == client->player) ||
             (game->status == IN_GAME &&
-             (strcmp(game->playerNames[0], client->name) == 0 ||
-              strcmp(game->playerNames[1], client->name) == 0)))
+            (game->players[0] == client->player || game->players[1] == client->player)))
         {
             write_client(client->sock, "T'es déjà en game frérot, essaie déjà de gagner celle là sale fou\n");
             return;
         }
     }
 
-    Game *spectatedGame = is_player_spectating_a_game(games, client->name);
+    Game *spectatedGame = is_player_spectating_a_game(games, client->player);
 
-    if(spectatedGame != NULL)
+    if (spectatedGame != NULL)
     {
         write_client(client->sock, "T'es déjà en train de mater une autre game frérot chillax\n");
         return;
@@ -206,8 +223,7 @@ void msg_accept_defy(Client *listeClients, Client *client, int clientsCount, Gam
         Game* cur = &games->data[i];
         if (cur->status != WAITING)
             continue;
-        if ((strcmp(cur->playerNames[0], adversaire->name) == 0 &&
-             strcmp(cur->playerNames[1], client->name) == 0))
+        if (cur->players[0] == adversaire->player && cur->players[1] == client->player)
         {
             game = cur;
             break;
@@ -237,37 +253,39 @@ void msg_defy(Client *listeClients, Client *client, int clientsCount, Games *gam
     {
         Game* game = &games->data[i];
         if (game->status == IN_GAME &&
-            (strcmp(game->playerNames[0], adversaire->name) == 0 ||
-             strcmp(game->playerNames[1], adversaire->name) == 0))
+            (game->players[0] == adversaire->player || game->players[1] == adversaire->player))
         {
             write_client(client->sock, "Il est déjà en game, attends ton tour\n");
             return;
         }
 
         if (game->status == WAITING &&
-            strcmp(game->playerNames[0], adversaire->name) == 0 &&
-            strcmp(game->playerNames[1], client->name) == 0)
+            game->players[0] == adversaire->player &&
+            game->players[1] == client->player)
         {
             message->kind = MSG_ACCEPT_DEFY;
-            strncpy(message->acceptDefy.pseudo, adversaire->name, sizeof message->acceptDefy.pseudo - 1);
+
+            Player *adversaire_p = find_player_by_id(adversaire->player);
+            strncpy(message->acceptDefy.pseudo, adversaire_p ? adversaire_p->name : "", sizeof message->acceptDefy.pseudo - 1);
+            message->acceptDefy.pseudo[sizeof message->acceptDefy.pseudo - 1] = 0;
             msg_accept_defy(listeClients, client, clientsCount, games, message);
             return;
         }
 
         // L'initiateur de la demande est toujours à l'index 0
         if (
+            (game->status == WAITING && game->players[0] == client->player) ||
             (game->status == IN_GAME &&
-             (strcmp(game->playerNames[0], client->name) == 0 ||
-              strcmp(game->playerNames[1], client->name) == 0)))
+            (game->players[0] == client->player || game->players[1] == client->player)))
         {
             write_client(client->sock, "T'es déjà en game frérot, essaie déjà de gagner celle là sale fou\n");
             return;
         }
     }
 
-    Game *spectatedGame = is_player_spectating_a_game(games, client->name);
+    Game *spectatedGame = is_player_spectating_a_game(games, client->player);
 
-    if(spectatedGame)
+    if (spectatedGame)
     {
         write_client(client->sock, "T'es déjà en train de mater une autre game frérot chillax\n");
         return;
@@ -275,13 +293,13 @@ void msg_defy(Client *listeClients, Client *client, int clientsCount, Games *gam
 
     Game newGame = {0};
     gameInit(&newGame);
-    strncpy(newGame.playerNames[0], client->name, sizeof newGame.playerNames[0] - 1);
-    strncpy(newGame.playerNames[1], adversaire->name, sizeof newGame.playerNames[1] - 1);
+    newGame.players[0] = client->player;
+    newGame.players[1] = adversaire->player;
     vec_push(games, newGame);
 
-    char invitation[BUF_SIZE] = {};// = "1V1 NO RE CONTRE ";
-
-    snprintf(invitation, sizeof invitation, "1V1 NO RE CONTRE %s ?\n", client->name);
+    Player *client_p = find_player_by_id(client->player);
+    char invitation[BUF_SIZE] = {};
+    snprintf(invitation, sizeof invitation, "1V1 NO RE CONTRE %s ?\n", client_p ? client_p->name : "Unknown");
 
     write_client(adversaire->sock, invitation);
 }
@@ -300,10 +318,9 @@ void msg_decline_defy(Client *listeClients, Client *client, int clientsCount, Ga
 
         if (game->status != WAITING)
             continue;
-        if ((strcmp(game->playerNames[0], adversaire->name) == 0 &&
-             strcmp(game->playerNames[1], client->name) == 0))
+        if (game->players[0] == adversaire->player &&
+            game->players[1] == client->player)
         {
-
             vec_splice(games, i, 1);
             found = 1;
             break;
@@ -315,8 +332,9 @@ void msg_decline_defy(Client *listeClients, Client *client, int clientsCount, Ga
         return;
     }
 
+    Player *client_p = find_player_by_id(client->player);
     char invitations[BUF_SIZE] = {};
-    snprintf(invitations, sizeof invitations, "déso, %s a trop peur, il a refusé\n", client->name);
+    snprintf(invitations, sizeof invitations, "déso, %s a trop peur, il a refusé\n", client_p ? client_p->name : "Unknown");
     write_client(adversaire->sock, invitations);
 }
 
@@ -324,11 +342,11 @@ int get_players_clients(Client *listeClients, int clientsCount, Game *game, Clie
 {
     for (int i = 0; i < clientsCount; ++i)
     {
-        if (strcmp(listeClients[i].name, game->playerNames[0]) == 0)
+        if (listeClients[i].player == game->players[0])
         {
             *opponent1 = &listeClients[i];
         }
-        else if (strcmp(listeClients[i].name, game->playerNames[1]) == 0)
+        else if (listeClients[i].player == game->players[1])
         {
             *opponent2 = &listeClients[i];
         }
@@ -344,17 +362,17 @@ void msg_spec(Client *listeClients, Client *client, int clientsCount, Games *gam
 {
     Client *adversaire1 = NULL;
     Client *adversaire2 = NULL;
-    if (!checkOpponent(&adversaire1, clientsCount, message->declineDefy.pseudo, listeClients, client))
+    if (!checkOpponent(&adversaire1, clientsCount, message->spec.pseudo, listeClients, client))
         return;
 
-    if (is_player_in_game(games, client->name))
+    if (is_player_in_game(games, client->player))
     {
         write_client(client->sock, "T'es déjà en game frérot, chillax\n");
         return;
     }
 
-    Game *game = find_game(games, adversaire1->name);
-    if(game == NULL)
+    Game *game = find_game(games, adversaire1->player);
+    if (game == NULL)
     {
         write_client(client->sock, "Il est pas en game mdr\n");
         return;
@@ -366,15 +384,15 @@ void msg_spec(Client *listeClients, Client *client, int clientsCount, Games *gam
         return;
     }
 
-    if (is_player_spectating_this_game(game, client->name))
+    if (is_player_spectating_this_game(game, client->player))
     {
         write_client(client->sock, "T'es déjà en train de mater frérot\n");
         return;
     }
 
-    Game *spectatedGame = is_player_spectating_a_game(games, client->name);
+    Game *spectatedGame = is_player_spectating_a_game(games, client->player);
 
-    if(spectatedGame != NULL)
+    if (spectatedGame != NULL)
     {
         write_client(client->sock, "T'es déjà en train de mater une autre game frérot chillax\n");
         return;
@@ -386,12 +404,13 @@ void msg_spec(Client *listeClients, Client *client, int clientsCount, Games *gam
         return;
     }
 
-    strncpy(game->spectatorNames[game->spectatorsCount], client->name, sizeof game->spectatorNames[game->spectatorsCount - 1] - 1);
+    game->spectators[game->spectatorsCount] = client->player;
     ++game->spectatorsCount;
 
-    char messageSpec[BUF_SIZE] = "";
-    strncat(messageSpec, client->name, sizeof messageSpec - strlen(messageSpec) - 1);
-    strncat(messageSpec, " se cache dans les buissons pour vous observer...\n", sizeof messageSpec - strlen(messageSpec) - 1);
+    Player *client_p = find_player_by_id(client->player);
+    const char *name = client_p ? client_p->name : "Un inconnu";
+    char messageSpec[BUF_SIZE] = {0};
+    snprintf(messageSpec, sizeof messageSpec, "%s se cache dans les buissons pour vous observer...\n", name);
     write_client(adversaire1->sock, messageSpec);
     write_client(adversaire2->sock, messageSpec);
     write_client(client->sock, "T'es maintenant en mode spectateur, enjoy le spectacle frérot\n");
@@ -399,18 +418,19 @@ void msg_spec(Client *listeClients, Client *client, int clientsCount, Games *gam
 
 void msg_stop_spec(Client *client, Games *games)
 {
-    Game *game = is_player_spectating_a_game(games, client->name);
+    Game *game = is_player_spectating_a_game(games, client->player);
 
-    if (game != NULL)
+    if (game == NULL)
     {
         write_client(client->sock, "T'es pas en train de mater une game frérot\n");
         return;
     }
     for (int i = 0; i < game->spectatorsCount; ++i)
     {
-        if (strcmp(game->spectatorNames[i], client->name) == 0)
+        if (game->spectators[i] == client->player)
         {
-            vec_splice_((char **)game->spectatorNames, &game->spectatorsCount, NULL, MAX_USERNAME_LENGTH, i, 1);
+            // vec_splice ici fait la même chose en vrai
+            memmove(&game->spectators[i], &game->spectators[i + 1], (game->spectatorsCount - i - 1) * sizeof(PlayerId));
             --game->spectatorsCount;
             break;
         }
@@ -434,7 +454,7 @@ void msg_play(Client *listeClients, Client *client, int clientsCount, Games *gam
     }
     int capturedSeeds = 0;
     int currentPlayerIndex = 0;
-    if (strcmp(game->playerNames[1], client->name) == 0)
+    if (game->players[1] == client->player)
     {
         currentPlayerIndex = 1;
     }
@@ -453,7 +473,7 @@ void msg_play(Client *listeClients, Client *client, int clientsCount, Games *gam
         {
             for (int j = 0; j < clientsCount; ++j)
             {
-                if (strcmp(listeClients[j].name, game->spectatorNames[i]) == 0)
+                if (listeClients[j].player == game->spectators[i])
                 {
                     write_client(listeClients[j].sock, printGame(game, board));
                     break;
@@ -461,19 +481,21 @@ void msg_play(Client *listeClients, Client *client, int clientsCount, Games *gam
             }
         }
         GameStatus result = gameStatus(game, game->currentPlayer);
+        Client *p0 = (currentPlayerIndex == 0) ? client : adversaire;
+        Client *p1 = (currentPlayerIndex == 1) ? client : adversaire;
         if (result == GAME_WIN_P0)
         {
-            write_client(adversaire->sock, "\nT'as gagné frérot, gg.\n");
-            write_client(client->sock, "\nT'as perdu frérot, laonte.\n");
+            write_client(p0->sock, "\nT'as gagné frérot, gg.\n");
+            write_client(p1->sock, "\nT'as perdu frérot, laonte.\n");
+            Player *winner_p = find_player_by_id(p0->player);
+            char spectatorMessage[BUF_SIZE] = {0};
+            snprintf(spectatorMessage, sizeof spectatorMessage, "%s a gagné, gg ez pour lui.\n", winner_p ? winner_p->name : "Unknown");
             for (int i = 0; i < game->spectatorsCount; ++i)
             {
                 for (int j = 0; j < clientsCount; ++j)
                 {
-                    if (strcmp(listeClients[j].name, game->spectatorNames[i]) == 0)
+                    if (listeClients[j].player == game->spectators[i])
                     {
-                        char spectatorMessage[BUF_SIZE] = {0};
-                        strncat(spectatorMessage, adversaire->name, sizeof spectatorMessage - strlen(spectatorMessage) - 1);
-                        strncat(spectatorMessage, " a gagné, gg ez pour lui.\n", sizeof spectatorMessage - strlen(spectatorMessage) - 1);
                         write_client(listeClients[j].sock, spectatorMessage);
                         break;
                     }
@@ -482,17 +504,17 @@ void msg_play(Client *listeClients, Client *client, int clientsCount, Games *gam
         }
         else if (result == GAME_WIN_P1)
         {
-            write_client(adversaire->sock, "\nT'as perdu frérot, laonte.\n");
-            write_client(client->sock, "\nT'as gagné frérot, gg.\n");
+            write_client(p1->sock, "\nT'as gagné frérot, gg.\n");
+            write_client(p0->sock, "\nT'as perdu frérot, laonte.\n");
+            Player *winner_p = find_player_by_id(p1->player);
+            char spectatorMessage[BUF_SIZE] = {0};
+            snprintf(spectatorMessage, sizeof spectatorMessage, "%s a gagné, gg ez pour lui.\n", winner_p ? winner_p->name : "Unknown");
             for (int i = 0; i < game->spectatorsCount; ++i)
             {
                 for (int j = 0; j < clientsCount; ++j)
                 {
-                    if (strcmp(listeClients[j].name, game->spectatorNames[i]) == 0)
+                    if (listeClients[j].player == game->spectators[i])
                     {
-                        char spectatorMessage[BUF_SIZE] = {0};
-                        strncat(spectatorMessage, client->name, sizeof spectatorMessage - strlen(spectatorMessage) - 1);
-                        strncat(spectatorMessage, " a gagné, gg ez pour lui.\n", sizeof spectatorMessage - strlen(spectatorMessage) - 1);
                         write_client(listeClients[j].sock, spectatorMessage);
                         break;
                     }
@@ -501,13 +523,13 @@ void msg_play(Client *listeClients, Client *client, int clientsCount, Games *gam
         }
         else if (result == GAME_DRAW)
         {
-            write_client(adversaire->sock, "\nEgalité frérot, nul.\n");
-            write_client(client->sock, "\nEgalité frérot, nul.\n");
+            write_client(p0->sock, "\nEgalité frérot, nul.\n");
+            write_client(p1->sock, "\nEgalité frérot, nul.\n");
             for (int i = 0; i < game->spectatorsCount; ++i)
             {
                 for (int j = 0; j < clientsCount; ++j)
                 {
-                    if (strcmp(listeClients[j].name, game->spectatorNames[i]) == 0)
+                    if (listeClients[j].player == game->spectators[i])
                     {
                         write_client(listeClients[j].sock, "\nT'as spectate pour r, ils ont fait égalité ces nuls\n");
                         break;
@@ -578,7 +600,14 @@ void handle_message(Client *listeClients, Client *client, int clientsCount, char
         break;
     case MSG_SETBIO:
     {
-        // TODO: Save bio in persistence
+        Player *p = find_player_by_id(client->player);
+        if (p != NULL)
+        {
+            strncpy(p->bio, message.setbio.bio, sizeof(p->bio) - 1);
+            p->bio[sizeof(p->bio) - 1] = 0;
+            update_player(p);
+            write_client(client->sock, "Bio mise a jour avec succes !\n");
+        }
         break;
     }
     default:

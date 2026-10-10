@@ -31,7 +31,7 @@ int parse_message(const char *buffer, ClientServerMessage *msg)
     }
     else if (strcmp(command, "message") == 0)
     {
-        char *space = strchr(buffer, ' ');
+        const char *space = strchr(buffer, ' ');
         if (space == NULL || space[1] == 0)
             return -1;
         msg->kind = MSG_MESSAGE;
@@ -80,7 +80,7 @@ int parse_message(const char *buffer, ClientServerMessage *msg)
     }
     else if (strcmp(command, "setbio") == 0)
     {
-        char *space = strchr(buffer, ' ');
+        const char *space = strchr(buffer, ' ');
         if (space == NULL || space[1] == 0)
             return -1;
         msg->kind = MSG_SETBIO;

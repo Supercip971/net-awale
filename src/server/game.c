@@ -1,4 +1,5 @@
 #include "game.h"
+#include "server/player.h"
 
 void gameInit(Game *game)
 {
@@ -121,8 +122,12 @@ char *printGame(Game *game, char board[BUF_SIZE])
     char *p = board;
     char player1Name[MAX_USERNAME_LENGTH] = {0};
     char player2Name[MAX_USERNAME_LENGTH] = {0};
-    strncpy(player1Name, game->playerNames[0], sizeof player1Name - 1);
-    strncpy(player2Name, game->playerNames[1], sizeof player2Name - 1);
+    Player *p1 = find_player_by_id(game->players[0]);
+    Player *p2 = find_player_by_id(game->players[1]);
+    Player *curr = find_player_by_id(game->players[game->currentPlayer]);
+    snprintf(player1Name, sizeof player1Name, "%s", p1 ? p1->name : "Joueur 1");
+    snprintf(player2Name, sizeof player2Name, "%s", p2 ? p2->name : "Joueur 2");
+    const char *currName = curr ? curr->name : "Inconnu";
     p += sprintf(p, "Grenier du joueur 1 (%s): %d\n\n"
                     "\n"
                     "\t 0\t\t 1\t\t 2\t\t 3\t\t 4\t\t 5\t\n"
@@ -148,14 +153,16 @@ char *printGame(Game *game, char board[BUF_SIZE])
                     "\n"
                     "\t 5\t\t 4\t\t 3\t\t 2\t\t 1\t\t 0\t\n"
                     "\n");
-    p += sprintf(p, "\nGrenier du joueur 2 (%s): %d\n\nAu tour de %s de jouer !", player2Name, game->hands[1], game->playerNames[game->currentPlayer]);
+    p += sprintf(p, "\nGrenier du joueur 2 (%s): %d\n\nAu tour de %s de jouer !", player2Name, game->hands[1], currName);
     return board;
 }
 
 char *displayGame(Game *game, char *response, size_t size)
 {
-    strncat(response, game->playerNames[0], size - strlen(response) - 1);
+    Player *p1 = find_player_by_id(game->players[0]);
+    Player *p2 = find_player_by_id(game->players[1]);
+    strncat(response, p1 ? p1->name : "Joueur 1", size - strlen(response) - 1);
     strncat(response, " VS ", size - strlen(response) - 1);
-    strncat(response, game->playerNames[1], size - strlen(response) - 1);
+    strncat(response, p2 ? p2->name : "Joueur 2", size - strlen(response) - 1);
     return response;
 }

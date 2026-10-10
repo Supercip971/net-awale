@@ -1,9 +1,10 @@
 #pragma once
 
 #include "server/common.h"
+#include "server/player.h"
 
 typedef struct
 {
     SOCKET sock;
-    char name[BUF_SIZE];
+    PlayerId player;
 } Client;

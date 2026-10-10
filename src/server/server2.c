@@ -6,18 +6,33 @@
 #include "server/commands.h"
 #include "server/message.h"
 #include "server/models/games.h"
+#include "server/player.h"
 #include "server/server2.h"
 #include "shared/game.h"
 #include "shared/vec.h"
 
-void removeGamesOf(Games *games, const char *name)
+void removeGamesOf(Games *games, PlayerId player)
 {
-    for (int i = games->length- 1; i >= 0; --i)
+    for (int i = games->length - 1; i >= 0; --i)
     {
-        if (strcmp(games->data[i].playerNames[0], name) == 0 ||
-            strcmp(games->data[i].playerNames[1], name) == 0)
+        if (games->data[i].players[0] == player ||
+            games->data[i].players[1] == player)
         {
             vec_splice(games, i, 1);
+        }
+    }
+    // FIXME: cette fonction est trop lourde, rajouter un removeSpectatorOf
+    for (int i = 0; i < games->length; ++i)
+    {
+        Game *g = &games->data[i];
+        for (int j = 0; j < g->spectatorsCount; ++j)
+        {
+            if (g->spectators[j] == player)
+            {
+                memmove(&g->spectators[j], &g->spectators[j + 1], (g->spectatorsCount - j - 1) * sizeof(PlayerId));
+                --g->spectatorsCount;
+                break;
+            }
         }
     }
 }
@@ -26,7 +41,8 @@ int check_name_exist(Client *listeClients, int clientCount, const char *name)
 {
     for (int i = 0; i < clientCount; ++i)
     {
-        if (strcmp(listeClients[i].name, name) == 0)
+        Player *p = find_player_by_id(listeClients[i].player);
+        if (p && strcmp(p->name, name) == 0)
         {
             return 1;
         }
@@ -56,6 +72,7 @@ void end(void)
 
 void app(void)
 {
+    players_db_init();
     SOCKET sock = init_connection();
     char buffer[BUF_SIZE];
     /* the index for the array */
@@ -140,8 +157,21 @@ void app(void)
 
             FD_SET(csock, &rdfs);
 
-            Client c = {.sock = csock};
-            strncpy(c.name, buffer, sizeof(c.name) - 1);
+            Player *existing = find_player_by_name(buffer);
+            PlayerId pid;
+            if (existing != NULL)
+            {
+                pid = existing->user_id;
+            }
+            else
+            {
+                Player new_p = {0};
+                memcpy(new_p.name, buffer, strlen(buffer));
+
+                pid = create_player(&new_p);
+            }
+
+            Client c = {.sock = csock, .player = pid};
             clients[actual] = c;
             actual++;
         }
@@ -165,10 +195,12 @@ void app(void)
                             if (clients[j].sock > max)
                                 max = clients[j].sock;
 
-                        strncpy(buffer, client.name, BUF_SIZE - 1);
+                        Player *disconnected_player = find_player_by_id(client.player);
+                        const char *name = disconnected_player ? disconnected_player->name : "Unknown";
+                        strncpy(buffer, name, BUF_SIZE - 1);
                         buffer[BUF_SIZE - 1] = 0;
                         strncat(buffer, " disconnected !", BUF_SIZE - strlen(buffer) - 1);
-                        removeGamesOf(&games, client.name);
+                        removeGamesOf(&games, client.player);
                         send_message_to_all_clients(clients, client, actual, buffer, 1);
                     }
                     else
@@ -182,6 +214,7 @@ void app(void)
     }
 
     vec_deinit(&games);
+    players_db_deinit();
     clear_clients(clients, actual);
     end_connection(sock);
 }
@@ -214,7 +247,9 @@ void send_message_to_all_clients(Client *clients, Client sender, int actual, con
             size_t offset = 0;
             if (from_server == 0)
             {
-                offset += snprintf(message, sizeof message - offset, "%s : ", sender.name);
+                Player *p = find_player_by_id(sender.player);
+                const char *name = p ? p->name : "Unknown";
+                offset += snprintf(message, sizeof message - offset, "%s : ", name);
             }
 
             offset += snprintf(message + offset, sizeof message - offset, "%s", buffer);
