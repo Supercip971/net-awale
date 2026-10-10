@@ -8,16 +8,16 @@
 #include "server/models/games.h"
 #include "server/server2.h"
 #include "shared/game.h"
+#include "shared/vec.h"
 
 void removeGamesOf(Games *games, const char *name)
 {
-    for (int i = games->count - 1; i >= 0; --i)
+    for (int i = games->length- 1; i >= 0; --i)
     {
-        if (strcmp(games->games[i].playerNames[0], name) == 0 ||
-            strcmp(games->games[i].playerNames[1], name) == 0)
+        if (strcmp(games->data[i].playerNames[0], name) == 0 ||
+            strcmp(games->data[i].playerNames[1], name) == 0)
         {
-            vec_splice_((char **)&games->games, &games->count, &games->capacity, sizeof(Game), i, 1);
-            --games->count;
+            vec_splice(games, i, 1);
         }
     }
 }
@@ -64,6 +64,7 @@ void app(void)
     /* an array for all clients */
     Client clients[MAX_CLIENTS];
     Games games = {0};
+    vec_init(&games);
 
     fd_set rdfs;
 
@@ -171,7 +172,7 @@ void app(void)
                     }
                     else
                     {
-                        handle_message(clients, &client, &actual, buffer, &games);
+                        handle_message(clients, &client, actual, buffer, &games);
                     }
                     break;
                 }
@@ -179,7 +180,7 @@ void app(void)
         }
     }
 
-    free(games.games);
+    vec_deinit(&games);
     clear_clients(clients, actual);
     end_connection(sock);
 }
@@ -205,17 +206,17 @@ void send_message_to_all_clients(Client *clients, Client sender, int actual, con
     char message[BUF_SIZE];
     for (int i = 0; i < actual; i++)
     {
-        message[0] = 0;
+        message[0] = 0; // reset str
         /* we don't send message to the sender */
         if (sender.sock != clients[i].sock)
         {
+            size_t offset = 0;
             if (from_server == 0)
             {
-                strncpy(message, sender.name, BUF_SIZE - 1);
-                message[BUF_SIZE - 1] = 0;
-                strncat(message, " : ", sizeof message - strlen(message) - 1);
+                offset += snprintf(message, sizeof message - offset, "%s : ", sender.name);
             }
-            strncat(message, buffer, sizeof message - strlen(message) - 1);
+
+            offset += snprintf(message + offset, sizeof message - offset, "%s", buffer);
             write_client(clients[i].sock, message);
         }
     }

@@ -1,10 +1,6 @@
 #pragma once
-#include "shared/models/const.h"
 #include "shared/game.h"
+#include "shared/models/const.h"
+#include "shared/vec.h"
 
-typedef struct Games
-{
-    Game* games;
-    int count;
-    int capacity;
-} Games;
+typedef vec_t(Game) Games;

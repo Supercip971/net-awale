@@ -88,6 +88,10 @@ int parse_message(const char *buffer, ClientServerMessage *msg)
         msg->setbio.bio[sizeof msg->setbio.bio - 1] = 0;
     }
     else
+    {
+
+        fprintf(stderr, "Unknown command: %s\n", command);
         return -1;
+    }
     return 0;
 }

@@ -114,7 +114,7 @@ void gameHistoryPersist(GameHistory *hist)
     return;
 }
 
-void gameHistoryForEach(void (*callback)(GameHistory *elt, void *), void* ctx)
+void gameHistoryForEach(void (*callback)(GameHistory *elt, void *), void *ctx)
 {
     for (int i = 0; i < cJSON_GetArraySize(game_state); i++)
     {

@@ -6,4 +6,4 @@
 #include "server/server2.h"
 #include "shared/models/clientServer.h"
 
-void handle_message(Client *listeClients, Client *client, int *clientsCount, char *buffer, Games *games);
+void handle_message(Client *listeClients, Client *client, int clientsCount, char *buffer, Games *games);
