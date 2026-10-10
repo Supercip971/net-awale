@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include "server/client2.h"
 #include "server/game.h"
 #include "server/message.h"
 #include "server/models/games.h"
@@ -12,10 +13,10 @@
 
 // TODO: Refactor with a map player: socket (avoiding n loops)
 
-int checkOpponent(Client **adversaire, int clientsCount, char pseudo[MAX_USERNAME_LENGTH], Client *listeClients, Client *client)
+Client* checkOpponent( char pseudo[MAX_USERNAME_LENGTH], Clients *connections, Client *client)
 {
     Player *player = find_player_by_name(pseudo);
-
+    Client *res = NULL;
     if (player == NULL)
     {
         write_client(client->sock, "Cki?\n");
@@ -28,12 +29,12 @@ int checkOpponent(Client **adversaire, int clientsCount, char pseudo[MAX_USERNAM
         return 0;
     }
 
-    for (int i = 0; i < clientsCount; ++i)
+    for (int i = 0; i < connections->length; ++i)
     {
-        if (listeClients[i].player == player->user_id)
+        if (connections->data[i].player == player->user_id)
         {
-            *adversaire = &listeClients[i];
-            return 1;
+            res = &connections->data[i];
+            return res;
         }
     }
 
@@ -81,7 +82,7 @@ Game *is_player_spectating_a_game(Games *games, PlayerId player)
     return NULL;
 }
 
-int findOpponentNameAndGame(Client **adversaire, int clientsCount, Client *listeClients, Games *games, Client *client, Game **res)
+int findOpponentNameAndGame(Client **adversaire, Clients *connections, Games *games, Client *client, Game **res)
 {
     PlayerId opponent = INVALID_PLAYER_ID;
     for (int i = 0; i < games->length; ++i)
@@ -106,11 +107,11 @@ int findOpponentNameAndGame(Client **adversaire, int clientsCount, Client *liste
         return 0;
     }
 
-    for (int i = 0; i < clientsCount; ++i)
+    for (int i = 0; i < connections->length; ++i)
     {
-        if (listeClients[i].player == opponent)
+        if (connections->data[i].player == opponent)
         {
-            *adversaire = &listeClients[i];
+            *adversaire = &connections->data[i];
             break;
         }
     }
@@ -136,13 +137,13 @@ int is_player_in_game(Games *games, PlayerId player)
     return 0;
 }
 
-void msg_players(Client *listeClients, Client *client, int clientsCount)
+void msg_players(Clients *connections, Client *client)
 {
     char response[BUF_SIZE] = "Liste des petits filous connectés :\n";
     size_t offset = strlen(response);
-    for (int i = 0; i < clientsCount; ++i)
+    for (int i = 0; i < connections->length; ++i)
     {
-        Player *player = find_player_by_id(listeClients[i].player);
+        Player *player = find_player_by_id(connections->data[i].player);
         const char *name = player ? player->name : "Anonyme(erroeur)";
         int l = snprintf(response + offset, sizeof response - offset, "- %s\n", name);
         if (l < 0 || (size_t)l >= sizeof response - offset)
@@ -197,15 +198,15 @@ void msg_games(Games *games, Client *client)
     write_client(client->sock, response);
 }
 
-void msg_message(Client *listeClients, Client *client, int clientsCount, ClientServerMessage *message)
+void msg_message(Clients *connections, Client *client,  ClientServerMessage *message)
 {
-    send_message_to_all_clients(listeClients, *client, clientsCount, message->message.message, 0);
+    send_message_to_all_clients(connections, *client,  message->message.message, 0);
 }
 
-void msg_accept_defy(Client *listeClients, Client *client, int clientsCount, Games *games, ClientServerMessage *message)
+void msg_accept_defy(Clients *connections, Client *client, Games *games, ClientServerMessage *message)
 {
-    Client *adversaire = NULL;
-    if (!checkOpponent(&adversaire, clientsCount, message->acceptDefy.pseudo, listeClients, client))
+    Client *adversaire = checkOpponent(message->acceptDefy.pseudo, connections, client);
+    if (!adversaire)
         return;
 
     // Check if defier is already in game
@@ -264,10 +265,10 @@ void msg_accept_defy(Client *listeClients, Client *client, int clientsCount, Gam
     write_client(client->sock, printGame(game, board));
 }
 
-void msg_defy(Client *listeClients, Client *client, int clientsCount, Games *games, ClientServerMessage *message)
+void msg_defy(Clients *connections, Client *client, Games *games, ClientServerMessage *message)
 {
-    Client *adversaire = NULL;
-    if (!checkOpponent(&adversaire, clientsCount, message->defy.pseudo, listeClients, client))
+    Client *adversaire = checkOpponent(message->defy.pseudo, connections, client);
+    if (!adversaire)
         return;
 
     // Check if defier is already in game
@@ -290,7 +291,7 @@ void msg_defy(Client *listeClients, Client *client, int clientsCount, Games *gam
             Player *adversaire_p = find_player_by_id(adversaire->player);
             strncpy(message->acceptDefy.pseudo, adversaire_p ? adversaire_p->name : "", sizeof message->acceptDefy.pseudo - 1);
             message->acceptDefy.pseudo[sizeof message->acceptDefy.pseudo - 1] = 0;
-            msg_accept_defy(listeClients, client, clientsCount, games, message);
+            msg_accept_defy(connections, client, games, message);
             return;
         }
 
@@ -326,10 +327,10 @@ void msg_defy(Client *listeClients, Client *client, int clientsCount, Games *gam
     write_client(adversaire->sock, invitation);
 }
 
-void msg_decline_defy(Client *listeClients, Client *client, int clientsCount, Games *games, ClientServerMessage *message)
+void msg_decline_defy(Clients *connections, Client *client, Games *games, ClientServerMessage *message)
 {
-    Client *adversaire = NULL;
-    if (!checkOpponent(&adversaire, clientsCount, message->declineDefy.pseudo, listeClients, client))
+    Client *adversaire = checkOpponent(message->declineDefy.pseudo, connections, client);
+    if (!adversaire)
         return;
 
     // Vu qu'on a qu'une seule game par joueur, on peut supprimer que le premier qu'on trouve
@@ -360,17 +361,17 @@ void msg_decline_defy(Client *listeClients, Client *client, int clientsCount, Ga
     write_client(adversaire->sock, invitations);
 }
 
-int get_players_clients(Client *listeClients, int clientsCount, Game *game, Client **opponent1, Client **opponent2)
+int get_players_clients(Clients *connections, Game *game, Client **opponent1, Client **opponent2)
 {
-    for (int i = 0; i < clientsCount; ++i)
+    for (int i = 0; i < connections->length; ++i)
     {
-        if (listeClients[i].player == game->players[0])
+        if (connections->data[i].player == game->players[0])
         {
-            *opponent1 = &listeClients[i];
+            *opponent1 = &connections->data[i];
         }
-        else if (listeClients[i].player == game->players[1])
+        else if (connections->data[i].player == game->players[1])
         {
-            *opponent2 = &listeClients[i];
+            *opponent2 = &connections->data[i];
         }
     }
     if (*opponent1 == NULL || *opponent2 == NULL)
@@ -380,11 +381,11 @@ int get_players_clients(Client *listeClients, int clientsCount, Game *game, Clie
     return 1;
 }
 
-void msg_spec(Client *listeClients, Client *client, int clientsCount, Games *games, ClientServerMessage *message)
+void msg_spec(Clients *connections, Client *client, Games *games, ClientServerMessage *message)
 {
-    Client *adversaire1 = NULL;
-    Client *adversaire2 = NULL;
-    if (!checkOpponent(&adversaire1, clientsCount, message->spec.pseudo, listeClients, client))
+    Client *adversaire1 = checkOpponent(message->spec.pseudo, connections, client);
+    Client *adversaire2 = checkOpponent(message->spec.pseudo, connections, adversaire1);
+    if (!adversaire1 || !adversaire2)
         return;
 
     if (is_player_in_game(games, client->player))
@@ -420,7 +421,7 @@ void msg_spec(Client *listeClients, Client *client, int clientsCount, Games *gam
         return;
     }
 
-    if (!get_players_clients(listeClients, clientsCount, game, &adversaire1, &adversaire2))
+    if (!get_players_clients(connections, game, &adversaire1, &adversaire2))
     {
         write_client(client->sock, "Les joueurs existent pas frr (ils ont dû se déco entre temps, réessaie)\n");
         return;
@@ -460,11 +461,11 @@ void msg_stop_spec(Client *client, Games *games)
     write_client(client->sock, "T'as quitté la partie c'est good\n");
 }
 
-void msg_play(Client *listeClients, Client *client, int clientsCount, Games *games, ClientServerMessage *message)
+void msg_play(Clients *connections, Client *client,  Games *games, ClientServerMessage *message)
 {
     Client *adversaire = NULL;
     Game *game = NULL;
-    if (!findOpponentNameAndGame(&adversaire, clientsCount, listeClients, games, client, &game))
+    if (!findOpponentNameAndGame(&adversaire, connections, games, client, &game))
     {
         write_client(client->sock, "T'es tout seul frérot, va défier quelqu'un.\n");
         return;
@@ -493,11 +494,11 @@ void msg_play(Client *listeClients, Client *client, int clientsCount, Games *gam
         write_client(client->sock, printGame(game, board));
         for (int i = 0; i < game->spectatorsCount; ++i)
         {
-            for (int j = 0; j < clientsCount; ++j)
+            for (int j = 0; j < connections->length; ++j)
             {
-                if (listeClients[j].player == game->spectators[i])
+                if (connections->data[j].player == game->spectators[i])
                 {
-                    write_client(listeClients[j].sock, printGame(game, board));
+                    write_client(connections->data[j].sock, printGame(game, board));
                     break;
                 }
             }
@@ -514,11 +515,12 @@ void msg_play(Client *listeClients, Client *client, int clientsCount, Games *gam
             snprintf(spectatorMessage, sizeof spectatorMessage, "%s a gagné, gg ez pour lui.\n", winner_p ? winner_p->name : "Unknown");
             for (int i = 0; i < game->spectatorsCount; ++i)
             {
-                for (int j = 0; j < clientsCount; ++j)
+                for (int j = 0; j < connections->length; ++j)
                 {
-                    if (listeClients[j].player == game->spectators[i])
+                    Client *spectator = &connections->data[j];
+                    if (spectator->player == game->spectators[i])
                     {
-                        write_client(listeClients[j].sock, spectatorMessage);
+                        write_client(spectator->sock, spectatorMessage);
                         break;
                     }
                 }
@@ -533,11 +535,12 @@ void msg_play(Client *listeClients, Client *client, int clientsCount, Games *gam
             snprintf(spectatorMessage, sizeof spectatorMessage, "%s a gagné, gg ez pour lui.\n", winner_p ? winner_p->name : "Unknown");
             for (int i = 0; i < game->spectatorsCount; ++i)
             {
-                for (int j = 0; j < clientsCount; ++j)
+                for (int j = 0; j < connections->length; ++j)
                 {
-                    if (listeClients[j].player == game->spectators[i])
+                    Client *spectator = &connections->data[j];
+                    if (spectator->player == game->spectators[i])
                     {
-                        write_client(listeClients[j].sock, spectatorMessage);
+                        write_client(spectator->sock, spectatorMessage);
                         break;
                     }
                 }
@@ -549,11 +552,12 @@ void msg_play(Client *listeClients, Client *client, int clientsCount, Games *gam
             write_client(p1->sock, "\nEgalité frérot, nul.\n");
             for (int i = 0; i < game->spectatorsCount; ++i)
             {
-                for (int j = 0; j < clientsCount; ++j)
+                for (int j = 0; j < connections->length; ++j)
                 {
-                    if (listeClients[j].player == game->spectators[i])
+                    Client *spectator = &connections->data[j];
+                    if (spectator->player == game->spectators[i])
                     {
-                        write_client(listeClients[j].sock, "\nT'as spectate pour r, ils ont fait égalité ces nuls\n");
+                        write_client(spectator->sock, "\nT'as spectate pour r, ils ont fait égalité ces nuls\n");
                         break;
                     }
                 }
@@ -577,7 +581,7 @@ void msg_play(Client *listeClients, Client *client, int clientsCount, Games *gam
     }
 }
 
-void handle_message(Client *listeClients, Client *client, int clientsCount, char *buffer, Games *games)
+void handle_message(Clients *connections, Client *client, char *buffer, Games *games)
 {
     // Nettoyage
     buffer[strcspn(buffer, "\r\n")] = 0;
@@ -594,7 +598,7 @@ void handle_message(Client *listeClients, Client *client, int clientsCount, char
     switch (message.kind)
     {
     case MSG_PLAYERS:
-        msg_players(listeClients, client, clientsCount);
+        msg_players(connections, client);
         break;
     case MSG_INFO:
         msg_player_info(client, message.info.pseudo);
@@ -603,22 +607,22 @@ void handle_message(Client *listeClients, Client *client, int clientsCount, char
         msg_games(games, client);
         break;
     case MSG_MESSAGE:
-        msg_message(listeClients, client, clientsCount, &message);
+        msg_message(connections, client, &message);
         break;
     case MSG_DEFY:
-        msg_defy(listeClients, client, clientsCount, games, &message);
+        msg_defy(connections, client, games, &message);
         break;
     case MSG_DECLINE_DEFY:
-        msg_decline_defy(listeClients, client, clientsCount, games, &message);
+        msg_decline_defy(connections, client, games, &message);
         break;
     case MSG_ACCEPT_DEFY:
-        msg_accept_defy(listeClients, client, clientsCount, games, &message);
+        msg_accept_defy(connections, client, games, &message);
         break;
     case MSG_PLAY:
-        msg_play(listeClients, client, clientsCount, games, &message);
+        msg_play(connections, client, games, &message);
         break;
     case MSG_SPEC:
-        msg_spec(listeClients, client, clientsCount, games, &message);
+        msg_spec(connections, client, games, &message);
         break;
     case MSG_STOP_SPEC:
         msg_stop_spec(client, games);

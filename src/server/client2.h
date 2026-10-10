@@ -8,3 +8,5 @@ typedef struct
     SOCKET sock;
     PlayerId player;
 } Client;
+
+typedef vec_t(Client) Clients;

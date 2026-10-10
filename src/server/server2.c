@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/socket.h>
+#include "server/client2.h"
 #include "server/commands.h"
 #include "server/message.h"
 #include "server/models/games.h"
@@ -37,11 +38,11 @@ void removeGamesOf(Games *games, PlayerId player)
     }
 }
 
-int check_name_exist(Client *listeClients, int clientCount, const char *name)
+int check_name_exist(Clients const * clients, const char *name)
 {
-    for (int i = 0; i < clientCount; ++i)
+    for (int i = 0; i < clients->length; ++i)
     {
-        Player *p = find_player_by_id(listeClients[i].player);
+        Player *p = find_player_by_id(clients->data[i].player);
         if (p && strcmp(p->name, name) == 0)
         {
             return 1;
@@ -79,10 +80,11 @@ void app(void)
     int actual = 0;
     int max = sock;
     /* an array for all clients */
-    Client clients[MAX_CLIENTS];
     Games games = {0};
     vec_init(&games);
 
+    Clients clients = {0};
+    vec_init(&clients);
     fd_set rdfs;
 
     printf("Server started on port %d\n", PORT);
@@ -100,7 +102,7 @@ void app(void)
         /* add socket of each client */
         for (i = 0; i < actual; i++)
         {
-            FD_SET(clients[i].sock, &rdfs);
+            FD_SET(clients.data[i].sock, &rdfs);
         }
 
         if (select(max + 1, &rdfs, NULL, NULL, NULL) == -1)
@@ -145,7 +147,7 @@ void app(void)
 
             // On enlève les \r et \n des pseudos
             buffer[strcspn(buffer, "\r\n")] = 0;
-            if (buffer[0] == 0 || strlen(buffer) >= MAX_USERNAME_LENGTH || check_name_exist(clients, actual, buffer))
+            if (buffer[0] == 0 || strlen(buffer) >= MAX_USERNAME_LENGTH || check_name_exist(&clients,  buffer))
             {
                 write_client(csock, "Le pseudo existe déjà. Sois original stp\n");
                 closesocket(csock);
@@ -172,7 +174,7 @@ void app(void)
             }
 
             Client c = {.sock = csock, .player = pid};
-            clients[actual] = c;
+            vec_push(&clients, c);
             actual++;
         }
         else
@@ -180,20 +182,20 @@ void app(void)
             for (i = 0; i < actual; i++)
             {
                 /* a client is talking */
-                if (FD_ISSET(clients[i].sock, &rdfs))
+                if (FD_ISSET(clients.data[i].sock, &rdfs))
                 {
-                    Client client = clients[i];
-                    int c = read_client(clients[i].sock, buffer);
+                    Client client = clients.data[i];
+                    int c = read_client(client.sock, buffer);
                     /* client disconnected */
                     if (c == 0)
                     {
-                        closesocket(clients[i].sock);
-                        remove_client(clients, i, &actual);
+                        closesocket(client.sock);
+                        remove_client(&clients, i);
 
                         max = sock;
-                        for (int j = 0; j < actual; j++)
-                            if (clients[j].sock > max)
-                                max = clients[j].sock;
+                        for (int j = 0; j < clients.length; j++)
+                            if (clients.data[j].sock > max)
+                                max = clients.data[j].sock;
 
                         Player *disconnected_player = find_player_by_id(client.player);
                         const char *name = disconnected_player ? disconnected_player->name : "Unknown";
@@ -201,11 +203,11 @@ void app(void)
                         buffer[BUF_SIZE - 1] = 0;
                         strncat(buffer, " disconnected !", BUF_SIZE - strlen(buffer) - 1);
                         removeGamesOf(&games, client.player);
-                        send_message_to_all_clients(clients, client, actual, buffer, 1);
+                        send_message_to_all_clients(&clients, client, buffer, 1);
                     }
                     else
                     {
-                        handle_message(clients, &client, actual, buffer, &games);
+                        handle_message(&clients, &client, buffer, &games);
                     }
                     break;
                 }
@@ -215,34 +217,33 @@ void app(void)
 
     vec_deinit(&games);
     players_db_deinit();
-    clear_clients(clients, actual);
+    clear_clients(&clients);
     end_connection(sock);
 }
 
-void clear_clients(Client *clients, int actual)
+void clear_clients(Clients *clients)
 {
-    for (int i = 0; i < actual; i++)
+    for (int i = 0; i < clients->length; i++)
     {
-        closesocket(clients[i].sock);
+        closesocket(clients->data[i].sock);
     }
 }
 
-void remove_client(Client *clients, int to_remove, int *actual)
+void remove_client(Clients *clients, int to_remove)
 {
     /* we remove the client in the array */
-    memmove(clients + to_remove, clients + to_remove + 1, (*actual - to_remove - 1) * sizeof(Client));
-    /* number client - 1 */
-    (*actual)--;
+    vec_splice(clients, to_remove, 1);
 }
 
-void send_message_to_all_clients(Client *clients, Client sender, int actual, const char *buffer, char from_server)
+void send_message_to_all_clients(Clients *clients, Client sender, const char *buffer, char from_server)
 {
     char message[BUF_SIZE];
-    for (int i = 0; i < actual; i++)
+    for (int i = 0; i < clients->length; i++)
     {
         message[0] = 0; // reset str
         /* we don't send message to the sender */
-        if (sender.sock != clients[i].sock)
+        auto client = clients->data[i];
+        if (sender.sock != client.sock)
         {
             size_t offset = 0;
             if (from_server == 0)
@@ -253,7 +254,7 @@ void send_message_to_all_clients(Client *clients, Client sender, int actual, con
             }
 
             offset += snprintf(message + offset, sizeof message - offset, "%s", buffer);
-            write_client(clients[i].sock, message);
+            write_client(client.sock, message);
         }
     }
 }
