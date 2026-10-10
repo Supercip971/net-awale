@@ -5,13 +5,8 @@
 
 #define DEFAULT_GAME_HISTORY_PATH "game_history.json"
 
-typedef struct Turn
-{
-    // TODO: fill this
-    char *play;
-} Turn;
-
-typedef vec_t(Turn) Turns;
+// player play
+typedef vec_t(int) Turns;
 
 typedef struct GameHistory
 {

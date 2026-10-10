@@ -73,7 +73,7 @@ static cJSON *gameHistoryEncode(GameHistory *gh)
 
     for (int i = 0; i < gh->turns.length; i++)
     {
-        auto play = cJSON_CreateString(gh->turns.data[i].play);
+        auto play = cJSON_CreateNumber(gh->turns.data[i]);
         cJSON_AddItemToArray(plays, play);
     }
 
@@ -95,9 +95,7 @@ static GameHistory *gameHistoryDecode(cJSON *gObject)
     for (int i = 0; i < cJSON_GetArraySize(plays); i++)
     {
         auto play = cJSON_GetArrayItem(plays, i);
-
-        char *play_str = cJSON_Print(play);
-        vec_push(&gh->turns, (Turn){.play = play_str});
+        vec_push(&gh->turns, cJSON_GetNumberValue(play));
     }
     return gh;
 }
@@ -106,11 +104,6 @@ void gameHistoryPersist(GameHistory *hist)
 {
     cJSON *gObject = gameHistoryEncode(hist);
     cJSON_AddItemToArray(game_state, gObject);
-
-    // we write each time
-    char *json_str = cJSON_Print(game_state);
-    fwrite(json_str, 1, strlen(json_str), game_hist);
-    free(json_str);
     return;
 }
 
@@ -122,10 +115,6 @@ void gameHistoryForEach(void (*callback)(GameHistory *elt, void *), void *ctx)
         GameHistory *gh = gameHistoryDecode(gObject);
         callback(gh, ctx);
 
-        for (int j = 0; j < gh->turns.length; j++)
-        {
-            free(gh->turns.data[j].play);
-        }
         vec_deinit(&gh->turns);
         free(gh);
     }
