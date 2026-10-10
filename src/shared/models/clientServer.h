@@ -11,6 +11,8 @@ typedef enum
     MSG_ACCEPT_DEFY,
     MSG_DECLINE_DEFY,
     MSG_MESSAGE,
+    MSG_SPEC,
+    MSG_STOP_SPEC,
     MSG_SETBIO
 } MsgType;
 
@@ -45,6 +47,13 @@ typedef struct
         {
             char message[BUF_SIZE - 9];
         } message;
+        struct
+        {
+            char pseudo[MAX_USERNAME_LENGTH];
+        } spec;
+        struct
+        {
+        } stopSpec;
         struct
         {
             char bio[BUF_SIZE - 7];

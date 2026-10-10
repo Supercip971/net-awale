@@ -15,5 +15,7 @@ typedef struct Game
     int hands[2];
     int currentPlayer;                        // 0 for player 1, 1 for player 2
     char playerNames[2][MAX_USERNAME_LENGTH]; // player names
+    char spectatorNames[MAX_SPECTATORS][MAX_USERNAME_LENGTH];
+    int spectatorsCount;
     GAME_STATUS status;
 } Game;

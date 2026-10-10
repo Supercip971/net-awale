@@ -65,6 +65,19 @@ int parse_message(const char *buffer, ClientServerMessage *msg)
         strncpy(msg->acceptDefy.pseudo, arg, sizeof msg->acceptDefy.pseudo - 1);
         msg->acceptDefy.pseudo[sizeof msg->acceptDefy.pseudo - 1] = 0;
     }
+    else if (strcmp(command, "spec") == 0)
+    {
+        if (arg[0] == 0)
+            return -1;
+
+        msg->kind = MSG_SPEC;
+        strncpy(msg->spec.pseudo, arg, sizeof msg->spec.pseudo - 1);
+        msg->spec.pseudo[sizeof msg->spec.pseudo - 1] = 0;
+    }
+    else if (strcmp(command, "stopspec") == 0)
+    {
+        msg->kind = MSG_STOP_SPEC;
+    }
     else if (strcmp(command, "setbio") == 0)
     {
         char *space = strchr(buffer, ' ');
