@@ -67,9 +67,14 @@ client: $(OUTPUT_CLIENT)
 server: $(OUTPUT_SERVER)
 	@$(OUTPUT_SERVER)
 
+N ?= 3
+
+run: all
+	@./run_tmux.sh $(N)
+
 clean:
 	@rm -rf $(BUILD_DIR)/
 
-.PHONY: clean all run client server
+.PHONY: clean all run client server tmux
 
 -include $(DFILES_CLIENT) $(DFILES_SERVER) $(DFILES_SHARED)

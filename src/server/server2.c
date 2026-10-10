@@ -68,6 +68,7 @@ void app(void)
 
     fd_set rdfs;
 
+    printf("Server started on port %d\n", PORT);
     while (1)
     {
         int i = 0;

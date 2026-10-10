@@ -34,6 +34,8 @@ static void app(const char *address, const char *name)
     /* send our name */
     write_server(sock, name);
 
+    printf("Connected to server %s:%d as %s\n", address, PORT, name);
+
     while (1)
     {
         FD_ZERO(&rdfs);
