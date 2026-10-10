@@ -149,6 +149,24 @@ void msg_players(Client *listeClients, Client *client, int clientsCount)
     write_client(client->sock, response);
 }
 
+void msg_player_info(Client* client, const char* pname)
+{
+    char response[BUF_SIZE] = {};
+    Player *player = find_player_by_name(pname);
+    if (player)
+    {
+        int l = snprintf(response, sizeof response, "Information sur le joueur %s :\n"
+                "  Bio: %s\n"
+                "  Rank: %d\n", player->name, player->bio, player->rank);
+        if (l < 0 || (size_t)l >= sizeof response)
+            return;
+        write_client(client->sock, response);
+        return;
+    }
+    char noPlayerResponse[BUF_SIZE] = "Joueur non trouvé.\n";
+    write_client(client->sock, noPlayerResponse);
+}
+
 void msg_games(Games *games, Client *client)
 {
     unsigned int runningGamesCount = 0;
@@ -573,6 +591,9 @@ void handle_message(Client *listeClients, Client *client, int clientsCount, char
     {
     case MSG_PLAYERS:
         msg_players(listeClients, client, clientsCount);
+        break;
+    case MSG_INFO:
+        msg_player_info(client, message.info.pseudo);
         break;
     case MSG_GAMES:
         msg_games(games, client);

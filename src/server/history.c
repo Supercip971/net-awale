@@ -59,8 +59,8 @@ static cJSON *gameHistoryEncode(GameHistory *gh)
         exit(EXIT_FAILURE);
     }
 
-    auto p1 = cJSON_CreateString(gh->p1);
-    auto p2 = cJSON_CreateString(gh->p2);
+    auto p1 = cJSON_CreateNumber(gh->p1);
+    auto p2 = cJSON_CreateNumber(gh->p2);
 
     cJSON_AddItemToObject(root, "p1", p1);
     cJSON_AddItemToObject(root, "p2", p2);
@@ -85,8 +85,8 @@ static GameHistory *gameHistoryDecode(cJSON *gObject)
 {
     GameHistory *gh = malloc(sizeof(GameHistory));
 
-    gh->p1 = cJSON_GetObjectItem(gObject, "p1")->valuestring;
-    gh->p2 = cJSON_GetObjectItem(gObject, "p2")->valuestring;
+    gh->p1 = cJSON_GetObjectItem(gObject, "p1")->valueint;
+    gh->p2 = cJSON_GetObjectItem(gObject, "p2")->valueint;
     gh->winner = cJSON_GetObjectItem(gObject, "winner")->valuedouble;
 
     vec_init(&gh->turns);

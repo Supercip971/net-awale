@@ -87,6 +87,12 @@ int parse_message(const char *buffer, ClientServerMessage *msg)
         strncpy(msg->setbio.bio, space + 1, sizeof msg->setbio.bio - 1);
         msg->setbio.bio[sizeof msg->setbio.bio - 1] = 0;
     }
+    else if (strcmp(command, "info") == 0)
+    {
+        msg->kind = MSG_INFO;
+        strncpy(msg->info.pseudo, arg, sizeof msg->info.pseudo - 1);
+        msg->info.pseudo[sizeof msg->info.pseudo - 1] = 0;
+    }
     else
     {
 

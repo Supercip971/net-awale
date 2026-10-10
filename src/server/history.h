@@ -1,5 +1,6 @@
 #pragma once
 
+#include "server/player.h"
 #include "shared/game.h"
 #include "shared/vec.h"
 
@@ -16,9 +17,9 @@ typedef vec_t(Turn) Turns;
 typedef struct GameHistory
 {
     Turns turns;
-    char *p1;
-    char *p2;
-    int winner;
+    PlayerId p1;
+    PlayerId p2;
+    PlayerId winner;
 } GameHistory;
 
 void gameHistoryInit(const char *path);

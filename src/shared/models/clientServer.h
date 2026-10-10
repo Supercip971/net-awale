@@ -5,6 +5,7 @@ typedef enum
 {
     MSG_CONNECT,
     MSG_PLAYERS,
+    MSG_INFO,
     MSG_GAMES,
     MSG_PLAY,
     MSG_DEFY,
@@ -58,5 +59,9 @@ typedef struct
         {
             char bio[BUF_SIZE - 7];
         } setbio;
+        struct
+        {
+            char pseudo[MAX_USERNAME_LENGTH];
+        } info;
     };
 } ClientServerMessage;
