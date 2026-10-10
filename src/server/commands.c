@@ -37,11 +37,11 @@ int checkOpponent(Client **adversaire, int clientsCount, char pseudo[MAX_USERNAM
     return 0;
 }
 
-Game* find_game(Games *games, PlayerId player)
+Game *find_game(Games *games, PlayerId player)
 {
     for (int i = 0; i < games->length; ++i)
     {
-        Game* cur = &games->data[i];
+        Game *cur = &games->data[i];
         if (cur->status != IN_GAME)
             continue;
 
@@ -65,7 +65,7 @@ int is_player_spectating_this_game(Game *game, PlayerId player)
     return 0;
 }
 
-Game* is_player_spectating_a_game(Games *games, PlayerId player)
+Game *is_player_spectating_a_game(Games *games, PlayerId player)
 {
     for (int i = 0; i < games->length; ++i)
     {
@@ -82,7 +82,7 @@ int findOpponentNameAndGame(Client **adversaire, int clientsCount, Client *liste
     PlayerId opponent = INVALID_PLAYER_ID;
     for (int i = 0; i < games->length; ++i)
     {
-        Game*  game = &games->data[i];
+        Game *game = &games->data[i];
         if (game->status != IN_GAME)
             continue;
 
@@ -190,7 +190,7 @@ void msg_accept_defy(Client *listeClients, Client *client, int clientsCount, Gam
     for (int i = 0; i < games->length; ++i)
     {
         // We do a pointer car copying a game is heavy
-        Game* game = &games->data[i];
+        Game *game = &games->data[i];
         if (game->status == IN_GAME &&
             (game->players[0] == adversaire->player || game->players[1] == adversaire->player))
         {
@@ -201,7 +201,7 @@ void msg_accept_defy(Client *listeClients, Client *client, int clientsCount, Gam
         if (
             (game->status == WAITING && game->players[0] == client->player) ||
             (game->status == IN_GAME &&
-            (game->players[0] == client->player || game->players[1] == client->player)))
+             (game->players[0] == client->player || game->players[1] == client->player)))
         {
             write_client(client->sock, "T'es déjà en game frérot, essaie déjà de gagner celle là sale fou\n");
             return;
@@ -220,7 +220,7 @@ void msg_accept_defy(Client *listeClients, Client *client, int clientsCount, Gam
     Game *game = NULL;
     for (int i = 0; i < games->length; ++i)
     {
-        Game* cur = &games->data[i];
+        Game *cur = &games->data[i];
         if (cur->status != WAITING)
             continue;
         if (cur->players[0] == adversaire->player && cur->players[1] == client->player)
@@ -251,7 +251,7 @@ void msg_defy(Client *listeClients, Client *client, int clientsCount, Games *gam
     // Check if defier is already in game
     for (int i = 0; i < games->length; ++i)
     {
-        Game* game = &games->data[i];
+        Game *game = &games->data[i];
         if (game->status == IN_GAME &&
             (game->players[0] == adversaire->player || game->players[1] == adversaire->player))
         {
@@ -276,7 +276,7 @@ void msg_defy(Client *listeClients, Client *client, int clientsCount, Games *gam
         if (
             (game->status == WAITING && game->players[0] == client->player) ||
             (game->status == IN_GAME &&
-            (game->players[0] == client->player || game->players[1] == client->player)))
+             (game->players[0] == client->player || game->players[1] == client->player)))
         {
             write_client(client->sock, "T'es déjà en game frérot, essaie déjà de gagner celle là sale fou\n");
             return;
@@ -314,7 +314,7 @@ void msg_decline_defy(Client *listeClients, Client *client, int clientsCount, Ga
     int found = 0;
     for (int i = 0; i < games->length; ++i)
     {
-        Game* game = &games->data[i];
+        Game *game = &games->data[i];
 
         if (game->status != WAITING)
             continue;
