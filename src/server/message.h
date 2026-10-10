@@ -1,6 +1,5 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
+#pragma once
+
 #include "server/common.h"
 #include "shared/models/clientServer.h"
 

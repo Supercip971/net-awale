@@ -1,8 +1,12 @@
 #include "server/commands.h"
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include "server/game.h"
+#include "server/message.h"
 #include "server/models/games.h"
 #include "server/player.h"
+#include "server/server2.h"
 #include "shared/game.h"
 #include "shared/vec.h"
 

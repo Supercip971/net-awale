@@ -1,9 +1,8 @@
 #pragma once
 
 #include <stdio.h>
-#include "client2.h"
+#include "server/common.h"
 #include "shared/game.h"
-#include "shared/vec.h"
 
 typedef enum
 {

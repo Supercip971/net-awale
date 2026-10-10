@@ -1,4 +1,7 @@
 #include "server/message.h"
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
 void write_client(SOCKET sock, const char *buffer)
 {

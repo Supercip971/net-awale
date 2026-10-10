@@ -1,7 +1,6 @@
 #pragma once
 
 #include "server/player.h"
-#include "shared/game.h"
 #include "shared/vec.h"
 
 #define DEFAULT_GAME_HISTORY_PATH "game_history.json"
