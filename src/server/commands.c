@@ -4,6 +4,7 @@
 #include <string.h>
 #include "server/client2.h"
 #include "server/game.h"
+#include "server/history.h"
 #include "server/message.h"
 #include "server/models/games.h"
 #include "server/player.h"
@@ -13,7 +14,7 @@
 
 // TODO: Refactor with a map player: socket (avoiding n loops)
 
-Client* checkOpponent( char pseudo[MAX_USERNAME_LENGTH], Clients *connections, Client *client)
+Client *checkOpponent(char pseudo[MAX_USERNAME_LENGTH], Clients *connections, Client *client)
 {
     Player *player = find_player_by_name(pseudo);
     Client *res = NULL;
@@ -154,15 +155,16 @@ void msg_players(Clients *connections, Client *client)
     write_client(client->sock, response);
 }
 
-void msg_player_info(Client* client, const char* pname)
+void msg_player_info(Client *client, const char *pname)
 {
     char response[BUF_SIZE] = {};
     Player *player = find_player_by_name(pname);
     if (player)
     {
         int l = snprintf(response, sizeof response, "Information sur le joueur %s :\n"
-                "  Bio: %s\n"
-                "  Rank: %d\n", player->name, player->bio, player->rank);
+                                                    "  Bio: %s\n"
+                                                    "  Rank: %d\n",
+                         player->name, player->bio, player->rank);
         if (l < 0 || (size_t)l >= sizeof response)
             return;
         write_client(client->sock, response);
@@ -198,9 +200,9 @@ void msg_games(Games *games, Client *client)
     write_client(client->sock, response);
 }
 
-void msg_message(Clients *connections, Client *client,  ClientServerMessage *message)
+void msg_message(Clients *connections, Client *client, ClientServerMessage *message)
 {
-    send_message_to_all_clients(connections, *client,  message->message.message, 0);
+    send_message_to_all_clients(connections, *client, message->message.message, 0);
 }
 
 void msg_accept_defy(Clients *connections, Client *client, Games *games, ClientServerMessage *message)
@@ -461,7 +463,7 @@ void msg_stop_spec(Client *client, Games *games)
     write_client(client->sock, "T'as quitté la partie c'est good\n");
 }
 
-void msg_play(Clients *connections, Client *client,  Games *games, ClientServerMessage *message)
+void msg_play(Clients *connections, Client *client, Games *games, ClientServerMessage *message)
 {
     Client *adversaire = NULL;
     Game *game = NULL;
@@ -488,10 +490,13 @@ void msg_play(Clients *connections, Client *client,  Games *games, ClientServerM
     }
     if (play(game, currentPlayerIndex, message->play.hole, &capturedSeeds))
     {
+
         game->currentPlayer = game->currentPlayer ? 0 : 1;
         char board[BUF_SIZE] = {0};
+        // send to client new board
         write_client(adversaire->sock, printGame(game, board));
         write_client(client->sock, printGame(game, board));
+
         for (int i = 0; i < game->spectatorsCount; ++i)
         {
             for (int j = 0; j < connections->length; ++j)
@@ -503,11 +508,17 @@ void msg_play(Clients *connections, Client *client,  Games *games, ClientServerM
                 }
             }
         }
+
+        // update game status
+        vec_push(&game->turns, message->play.hole);
+
         GameStatus result = gameStatus(game, game->currentPlayer);
         Client *p0 = (currentPlayerIndex == 0) ? client : adversaire;
         Client *p1 = (currentPlayerIndex == 1) ? client : adversaire;
         if (result == GAME_WIN_P0)
         {
+            gameHistoryGameEnded(game, 0);
+
             write_client(p0->sock, "\nT'as gagné frérot, gg.\n");
             write_client(p1->sock, "\nT'as perdu frérot, laonte.\n");
             Player *winner_p = find_player_by_id(p0->player);
@@ -528,6 +539,8 @@ void msg_play(Clients *connections, Client *client,  Games *games, ClientServerM
         }
         else if (result == GAME_WIN_P1)
         {
+            gameHistoryGameEnded(game, 1);
+
             write_client(p1->sock, "\nT'as gagné frérot, gg.\n");
             write_client(p0->sock, "\nT'as perdu frérot, laonte.\n");
             Player *winner_p = find_player_by_id(p1->player);
@@ -569,6 +582,8 @@ void msg_play(Clients *connections, Client *client,  Games *games, ClientServerM
             {
                 if (&(games->data[i]) == game)
                 {
+                    // not deinit it is handled in game saving
+                    // vec_deinit(&games->data[i].turns);
                     vec_splice(games, i, 1);
                     break;
                 }

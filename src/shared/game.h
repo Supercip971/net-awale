@@ -1,12 +1,15 @@
 #pragma once
 #include "server/player.h"
 #include "shared/models/const.h"
+#include "shared/vec.h"
 
 typedef enum
 {
     WAITING,
     IN_GAME
 } GAME_STATUS;
+
+typedef vec_t(int) Turns;
 
 typedef struct Game
 {
@@ -19,4 +22,5 @@ typedef struct Game
     PlayerId spectators[MAX_SPECTATORS];
     int spectatorsCount;
     GAME_STATUS status;
+    Turns turns;
 } Game;

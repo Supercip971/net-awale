@@ -13,6 +13,7 @@ void gameInit(Game *game)
     game->status = WAITING;
     int randomIndex = rand() % 2;
     game->currentPlayer = randomIndex;
+    vec_init(&game->turns);
 }
 
 static int sideSum(const Game *g, int side)

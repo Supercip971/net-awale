@@ -1,12 +1,12 @@
 #pragma once
 
 #include "server/player.h"
+#include "shared/game.h"
 #include "shared/vec.h"
 
 #define DEFAULT_GAME_HISTORY_PATH "game_history.json"
 
 // player play
-typedef vec_t(int) Turns;
 
 typedef struct GameHistory
 {
@@ -16,7 +16,12 @@ typedef struct GameHistory
     PlayerId winner;
 } GameHistory;
 
-void gameHistoryInit(const char *path);
+typedef vec_t(GameHistory) GameHistories;
 
-void gameHistoryPersist(GameHistory *hist);
-void gameHistoryForEach(void (*callback)(GameHistory *elt, void *ctx), void *ctx);
+void gameHistoryInit();
+void gameHistoryDeinit();
+
+void gameHistoryGameEnded(Game *game, int winner);
+
+void gameHistoryForEach(void (*callback)(GameHistory *elt, void *ctx), void *ctx, int count);
+void gameHistoryPlayerForEach(PlayerId of, void (*callback)(GameHistory *elt, void *ctx), void *ctx, int count);

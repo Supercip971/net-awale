@@ -5,6 +5,7 @@
 #include <sys/socket.h>
 #include "server/client2.h"
 #include "server/commands.h"
+#include "server/history.h"
 #include "server/message.h"
 #include "server/models/games.h"
 #include "server/player.h"
@@ -22,7 +23,6 @@ void removeGamesOf(Games *games, PlayerId player)
             vec_splice(games, i, 1);
         }
     }
-    // FIXME: cette fonction est trop lourde, rajouter un removeSpectatorOf
     for (int i = 0; i < games->length; ++i)
     {
         Game *g = &games->data[i];
@@ -38,11 +38,11 @@ void removeGamesOf(Games *games, PlayerId player)
     }
 }
 
-int check_name_exist(Clients const * clients, const char *name)
+int check_name_exist(Clients *listeClients, const char *name)
 {
-    for (int i = 0; i < clients->length; ++i)
+    for (int i = 0; i < listeClients->length; ++i)
     {
-        Player *p = find_player_by_id(clients->data[i].player);
+        Player *p = find_player_by_id(listeClients->data[i].player);
         if (p && strcmp(p->name, name) == 0)
         {
             return 1;
@@ -74,10 +74,9 @@ void end(void)
 void app(void)
 {
     players_db_init();
+    gameHistoryInit();
     SOCKET sock = init_connection();
     char buffer[BUF_SIZE];
-    /* the index for the array */
-    int actual = 0;
     int max = sock;
     /* an array for all clients */
     Games games = {0};
@@ -100,7 +99,7 @@ void app(void)
         FD_SET(sock, &rdfs);
 
         /* add socket of each client */
-        for (i = 0; i < actual; i++)
+        for (i = 0; i < clients.length; i++)
         {
             FD_SET(clients.data[i].sock, &rdfs);
         }
@@ -129,7 +128,7 @@ void app(void)
                 continue;
             }
 
-            if (actual >= MAX_CLIENTS)
+            if (clients.length >= MAX_CLIENTS)
             {
                 printf("Serveur plein CLAMERD");
                 write_client(csock, "Serveur plein.\n");
@@ -175,11 +174,10 @@ void app(void)
 
             Client c = {.sock = csock, .player = pid};
             vec_push(&clients, c);
-            actual++;
         }
         else
         {
-            for (i = 0; i < actual; i++)
+            for (i = 0; i < clients.length; i++)
             {
                 /* a client is talking */
                 if (FD_ISSET(clients.data[i].sock, &rdfs))
@@ -217,6 +215,7 @@ void app(void)
 
     vec_deinit(&games);
     players_db_deinit();
+    gameHistoryDeinit();
     clear_clients(&clients);
     end_connection(sock);
 }
