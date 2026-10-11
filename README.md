@@ -1,3 +1,33 @@
-A template repo when trying to make side project
+# Network Awale 
 
-If you want to remove every git file you can run `reset.sh`.
+An app made for INSA Lyon school project.
+
+## How to build 
+
+> dependencies:
+> - tested on MacOS/Linux not on Windows
+> - gcc/clang 
+> - (optional:) python for unit test
+> - (optional:) tmux for multi-terminal test support
+
+```sh
+make all -j
+```
+
+## How to run 
+
+### Server 
+
+```sh
+./build/server
+```
+
+### Client 
+
+```sh
+./build/client {IP_HOST} {USERNAME}
+```
+
+## Tests
+
+Taken from:  https://github.com/joansalasoler/oware/blob/develop/src/test/resources/oware-bench.suite
