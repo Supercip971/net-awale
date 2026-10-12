@@ -385,8 +385,18 @@ void msg_spec(Clients *connections, Client *client, Games *games, ClientServerMe
 
     if (game->private)
     {
-        write_client(client->sock, "NANANANAN C'EST PRIVE.");
-        return;
+        Player *player0 = find_player_by_id(p0->player);
+        Player *player1 = find_player_by_id(p1->player);
+        if (player0 == NULL || player1 == NULL)
+        {
+            write_client(client->sock, "Erreur, joueurs introuvables\n");
+            return;
+        }
+        if (!has_friend(player0, client->player) && !has_friend(player1, client->player))
+        {
+            write_client(client->sock, "NANANANAN C'EST PRIVE.\n");
+            return;
+        }
     }
 
     game->spectators[game->spectatorsCount++] = client->player;
@@ -399,6 +409,7 @@ void msg_spec(Clients *connections, Client *client, Games *games, ClientServerMe
     w_write(&wstr, "%s se cache dans les buissons pour vous observer...\n", client_p ? client_p->name : "Un inconnu");
     write_client(p0->sock, w_view(&wstr));
     write_client(p1->sock, w_view(&wstr));
+    w_deinit(&wstr);
     write_client(client->sock, "T'es maintenant en mode spectateur, enjoy le spectacle frérot\n");
 }
 
@@ -564,6 +575,11 @@ void msg_play(Clients *connections, Client *client, Games *games, ClientServerMe
 void msg_set_private(Client *client, Games *games, int private, Clients *connections)
 {
     Game *game = find_game(games, client->player);
+    if (game == NULL)
+    {
+        write_client(client->sock, "T'es même pas en game frérot\n");
+        return;
+    }
     set_game_private(game, private, connections);
 }
 
@@ -715,9 +731,9 @@ void msg_replay_game(Client *client, GameHistoryId gameHistoryId)
     doReplay(client, 0);
 }
 
-void handle_message(Clients *connections, Client *client, ClientServerMessage* message, Games *games)
+void handle_message(Clients *connections, Client *client, ClientServerMessage *message, Games *games)
 {
-    if(message->protocol_magic != PROTOCOL_MAGIC)
+    if (message->protocol_magic != PROTOCOL_MAGIC)
     {
         write_client(client->sock, "Invalid magic number\n");
         return;

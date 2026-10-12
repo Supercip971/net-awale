@@ -230,8 +230,17 @@ void set_game_private(Game *game, int private, Clients *connections)
     game->private = private;
     if (!private)
         return;
-    for (int i = 0; i < game->spectatorsCount; ++i)
+
+    Player *player0 = find_player_by_id(game->players[0]);
+    Player *player1 = find_player_by_id(game->players[1]);
+    // Vu qu'on supprime des specs, on va pas faire i++ sinon on va sauter certains
+    for (int i = 0; i < game->spectatorsCount;)
     {
+        if (has_friend(player0, game->spectators[i]) || has_friend(player1, game->spectators[i]))
+        {
+            i++;
+            continue;
+        }
         for (int j = 0; j < connections->length; ++j)
         {
             if (connections->data[j].player == game->spectators[i])
@@ -240,6 +249,8 @@ void set_game_private(Game *game, int private, Clients *connections)
                 break;
             }
         }
+
+        memmove(&game->spectators[i], &game->spectators[i + 1], (game->spectatorsCount - i - 1) * sizeof(PlayerId));
+        --game->spectatorsCount;
     }
-    game->spectatorsCount = 0;
 }

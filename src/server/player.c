@@ -179,3 +179,15 @@ Player *find_player_by_name(char const *name)
     }
     return NULL;
 }
+
+int has_friend(Player *p, PlayerId id)
+{
+    if (p == NULL)
+        return 0;
+    for (int k = 0; k < p->friends.length; ++k)
+    {
+        if (p->friends.data[k] == id)
+            return 1;
+    }
+    return 0;
+}

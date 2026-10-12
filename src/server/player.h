@@ -27,4 +27,6 @@ PlayerId create_player(Player *player);
 Player *find_player_by_id(PlayerId id);
 Player *find_player_by_name(char const *name);
 
+int has_friend(Player *p, PlayerId id);
+
 typedef vec_t(Player) Players;
