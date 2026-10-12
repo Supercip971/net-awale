@@ -10,6 +10,7 @@
 #include "server/player.h"
 #include "server/server2.h"
 #include "shared/game.h"
+#include "shared/models/clientServer.h"
 #include "shared/vec.h"
 
 void removeGamesOf(Games *games, PlayerId player)
@@ -75,7 +76,7 @@ void app(void)
     players_db_init();
     gameHistoryInit();
     SOCKET sock = init_connection();
-    char buffer[BUF_SIZE];
+    char buffer[sizeof(ClientServerMessage)];
     int max = sock;
     /* an array for all clients */
     Games games = {0};
@@ -183,6 +184,7 @@ void app(void)
                 {
                     Client client = clients.data[i];
                     int c = read_client(client.sock, buffer);
+
                     /* client disconnected */
                     if (c == 0)
                     {
@@ -204,7 +206,7 @@ void app(void)
                     }
                     else
                     {
-                        handle_message(&clients, &clients.data[i], buffer, &games);
+                        handle_message(&clients, &clients.data[i], (ClientServerMessage*)buffer, &games);
                     }
                     break;
                 }
@@ -299,14 +301,12 @@ int read_client(SOCKET sock, char *buffer)
 {
     int n = 0;
 
-    if ((n = recv(sock, buffer, BUF_SIZE - 1, 0)) < 0)
+    if ((n = recv(sock, buffer, sizeof(ClientServerMessage), 0)) < 0)
     {
         perror("recv()");
         /* if recv error we disonnect the client */
         n = 0;
     }
-
-    buffer[n] = 0;
 
     return n;
 }

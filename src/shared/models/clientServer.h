@@ -5,6 +5,8 @@
 
 typedef enum
 {
+    MSG_STATUS,
+    MSG_CLIENTSIDE_HELP,
     MSG_CONNECT,
     MSG_PLAYERS,
     MSG_INFO,
@@ -26,11 +28,23 @@ typedef enum
     MSG_CONTINUE_REPLAY
 } MsgType;
 
+//  INSA in ascii => hexadecimal
+// this is used to check 2 things:
+// we are receiving a message expected and the endianness is correct
+// this is done in protocol resolution in general and is a good way to check if the message is valid
+#define PROTOCOL_MAGIC 0x494e5341
+
 typedef struct
 {
+    uint64_t protocol_magic;
     MsgType kind;
     union
     {
+        struct
+        {
+            bool is_error;
+            char msg[BUF_SIZE - 32];
+        } status;
         struct
         {
         } players;

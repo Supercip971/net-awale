@@ -3,6 +3,9 @@
 #include <stdlib.h>
 #include <string.h>
 #include "client/client2.h"
+#include "client/help.h"
+#include "client/parser.h"
+#include "shared/models/clientServer.h"
 
 static void init(void)
 {
@@ -24,6 +27,29 @@ static void end(void)
 #endif
 }
 
+static void onUserInput(SOCKET sock, const char *buffer)
+{
+
+    ClientServerMessage *msg = encode_message(buffer);
+    if (msg == NULL)
+    {
+        printf("invalid command, use `help` to show available commands\n");
+        return;
+    }
+    else if (msg->kind == MSG_CLIENTSIDE_HELP)
+    {
+        showHelp();
+        free(msg);
+        return;
+    }
+    if (send(sock, msg, sizeof(*msg), 0) < 0)
+    {
+        perror("send()");
+        exit(errno);
+    }
+    free(msg);
+}
+
 static void app(const char *address, const char *name)
 {
     SOCKET sock = init_connection(address);
@@ -35,7 +61,8 @@ static void app(const char *address, const char *name)
     write_server(sock, name);
 
     printf("Connected to server %s:%d as %s\n", address, PORT, name);
-
+    printf("\n$ ");
+    fflush(stdout); // sur ma machine le $ n'est pas affiché
     while (1)
     {
         FD_ZERO(&rdfs);
@@ -69,7 +96,8 @@ static void app(const char *address, const char *name)
                     buffer[BUF_SIZE - 1] = 0;
                 }
             }
-            write_server(sock, buffer);
+            onUserInput(sock, buffer);
+            fflush(stdout); // sur ma machine le $ n'est pas affiché à cause de \n
         }
         else if (FD_ISSET(sock, &rdfs))
         {
@@ -81,6 +109,9 @@ static void app(const char *address, const char *name)
                 break;
             }
             puts(buffer);
+
+            printf("\n$ ");
+            fflush(stdout); // sur ma machine le $ n'est pas affiché à cause de \n
         }
     }
 

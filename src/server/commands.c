@@ -715,48 +715,43 @@ void msg_replay_game(Client *client, GameHistoryId gameHistoryId)
     doReplay(client, 0);
 }
 
-void handle_message(Clients *connections, Client *client, char *buffer, Games *games)
+void handle_message(Clients *connections, Client *client, ClientServerMessage* message, Games *games)
 {
-    // Nettoyage
-    buffer[strcspn(buffer, "\r\n")] = 0;
-    if (buffer[0] == 0)
-        return;
-
-    ClientServerMessage message = {};
-    if (parse_message(buffer, &message) < 0)
+    if(message->protocol_magic != PROTOCOL_MAGIC)
     {
-        write_client(client->sock, "C'est quoi cte commande ? pas dans les specs frérot\n");
+        write_client(client->sock, "Invalid magic number\n");
         return;
     }
 
-    switch (message.kind)
+    // Traitement des messages (en fonction de leur kind)
+    switch (message->kind)
     {
     case MSG_PLAYERS:
         msg_players(connections, client);
         break;
     case MSG_INFO:
-        msg_player_info(client, message.info.pseudo);
+        msg_player_info(client, message->info.pseudo);
         break;
     case MSG_GAMES:
         msg_games(games, client);
         break;
     case MSG_MESSAGE:
-        msg_message(connections, client, &message);
+        msg_message(connections, client, message);
         break;
     case MSG_DEFY:
-        msg_defy(connections, client, games, &message);
+        msg_defy(connections, client, games, message);
         break;
     case MSG_DECLINE_DEFY:
-        msg_decline_defy(connections, client, games, &message);
+        msg_decline_defy(connections, client, games, message);
         break;
     case MSG_ACCEPT_DEFY:
-        msg_accept_defy(connections, client, games, &message);
+        msg_accept_defy(connections, client, games, message);
         break;
     case MSG_PLAY:
-        msg_play(connections, client, games, &message);
+        msg_play(connections, client, games, message);
         break;
     case MSG_SPEC:
-        msg_spec(connections, client, games, &message);
+        msg_spec(connections, client, games, message);
         break;
     case MSG_STOP_SPEC:
         msg_stop_spec(client, games);
@@ -765,14 +760,14 @@ void handle_message(Clients *connections, Client *client, char *buffer, Games *g
         msg_friends(client);
         break;
     case MSG_ADDFRIEND:
-        msg_addFriend(client, &message);
+        msg_addFriend(client, message);
         break;
     case MSG_SETBIO:
     {
         Player *p = find_player_by_id(client->player);
         if (p != NULL)
         {
-            strncpy(p->bio, message.setbio.bio, sizeof(p->bio) - 1);
+            strncpy(p->bio, message->setbio.bio, sizeof(p->bio) - 1);
             p->bio[sizeof(p->bio) - 1] = 0;
             update_player(p);
             write_client(client->sock, "Bio mise a jour avec succes !\n");
@@ -780,13 +775,13 @@ void handle_message(Clients *connections, Client *client, char *buffer, Games *g
         break;
     }
     case MSG_SET_PRIVATE:
-        msg_set_private(client, games, message.setPrivate.private, connections);
+        msg_set_private(client, games, message->setPrivate.private, connections);
         break;
     case MSG_HISTORY:
         msg_history(client);
         break;
     case MSG_REPLAY_GAME:
-        msg_replay_game(client, message.replayGame.id);
+        msg_replay_game(client, message->replayGame.id);
         break;
     case MSG_STEP_REPLAY:
         doReplay(client, 0);

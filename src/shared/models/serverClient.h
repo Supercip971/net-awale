@@ -4,6 +4,7 @@
 
 typedef enum
 {
+    MSG_STATUS, // a custom string displaying a status
     MSG_CONNECT,
     MSG_PLAYERS,
     MSG_PLAY,
