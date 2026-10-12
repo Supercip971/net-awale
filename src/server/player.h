@@ -7,12 +7,15 @@
 typedef uint64_t PlayerId;
 #define INVALID_PLAYER_ID ((PlayerId)(-1))
 
+typedef vec_t(PlayerId) Friends;
+
 typedef struct Player
 {
     PlayerId user_id;
     char name[MAX_USERNAME_LENGTH];
     char bio[MAX_BIO_LENGTH];
     int rank;
+    Friends friends;
 } Player;
 
 void players_db_init();

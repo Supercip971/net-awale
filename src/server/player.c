@@ -25,6 +25,7 @@ void decode_json(cJSON *players)
         strncpy(p.name, cJSON_GetObjectItem(player, "name")->valuestring, MAX_USERNAME_LENGTH);
         strncpy(p.bio, cJSON_GetObjectItem(player, "bio")->valuestring, MAX_BIO_LENGTH);
         p.rank = cJSON_GetObjectItem(player, "rank")->valueint;
+        vec_init(&p.friends);
 
         vec_push(&memory_db, p);
     }
@@ -96,6 +97,10 @@ void players_db_deinit()
     free(json);
     cJSON_Delete(players);
     fclose(player_persist);
+    for (int i = 0; i < memory_db.length; ++i)
+    {
+        vec_deinit(&memory_db.data[i].friends);
+    }
     vec_deinit(&memory_db);
 }
 
@@ -141,4 +146,8 @@ Player *find_player_by_name(char const *name)
         }
     }
     return NULL;
+}
+
+void addFriend(Player player, char friend[MAX_USERNAME_LENGTH])
+{
 }
