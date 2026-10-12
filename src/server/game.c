@@ -15,6 +15,7 @@ void gameInit(Game *game)
     game->status = WAITING;
     int randomIndex = rand() % 2;
     game->currentPlayer = randomIndex;
+    game->started = randomIndex;
     game->private = 0;
     vec_init(&game->turns);
 }
@@ -157,7 +158,7 @@ char *printGame(Game *game, char board[BUF_SIZE])
                     "\n"
                     "\t 5\t\t 4\t\t 3\t\t 2\t\t 1\t\t 0\t\n"
                     "\n");
-    p += sprintf(p, "\nGrenier du joueur 2 (%s): %d\n\nAu tour de %s de jouer !", player2Name, game->hands[1], currName);
+    p += sprintf(p, "\nGrenier du joueur 2 (%s): %d\n\nAu tour de %s de jouer !\n", player2Name, game->hands[1], currName);
     return board;
 }
 

@@ -26,6 +26,10 @@ static cJSON *gameHistoryEncode(GameHistory *gh)
 
     cJSON_AddItemToObject(root, "winner", winner);
 
+    auto started = cJSON_CreateNumber(gh->started);
+
+    cJSON_AddItemToObject(root, "started", started);
+
     auto plays = cJSON_CreateArray();
 
     for (int i = 0; i < gh->turns.length; i++)
@@ -49,6 +53,7 @@ static GameHistory *gameHistoryDecode(cJSON *gObject)
     gh->p1 = cJSON_GetObjectItem(gObject, "p1")->valueint;
     gh->p2 = cJSON_GetObjectItem(gObject, "p2")->valueint;
     gh->winner = cJSON_GetObjectItem(gObject, "winner")->valuedouble;
+    gh->started = cJSON_GetObjectItem(gObject, "started")->valuedouble;
     gh->id = cJSON_GetObjectItem(gObject, "id")->valueint;
     vec_init(&gh->turns);
 
@@ -153,6 +158,7 @@ void gameHistoryGameEnded(Game *game, int winner)
         .p1 = game->players[0],
         .p2 = game->players[1],
         .winner = game->players[winner],
+        .started = game->players[game->started],
         .id = last_id,
     };
     gameHistoryPersist(&hist);
@@ -180,4 +186,16 @@ int gameHistoryForEachPlayer(PlayerId of, void (*callback)(GameHistory *elt, voi
         }
     }
     return count;
+}
+
+GameHistory *getGameHistoryById(GameHistoryId id)
+{
+    for (int i = 0; i < histories.length; i++)
+    {
+        if (id == histories.data[i].id)
+        {
+            return &(histories.data[i]);
+        }
+    }
+    return NULL;
 }

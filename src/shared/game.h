@@ -18,6 +18,7 @@ typedef struct Game
     int board[12];
     int hands[2];
     int currentPlayer; // 0 for player 1, 1 for player 2
+    int started;
     PlayerId players[2];
     PlayerId spectators[MAX_SPECTATORS];
     int spectatorsCount;

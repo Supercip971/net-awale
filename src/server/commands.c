@@ -638,8 +638,51 @@ void msg_history(Client *client)
     w_deinit(&wstr);
 }
 
-void msg_replay_game(Client *client, char pseudo[MAX_USERNAME_LENGTH])
+void msg_replay_game(Client *client, GameHistoryId gameHistoryId)
 {
+    GameHistory *gameHistory = getGameHistoryById(gameHistoryId);
+    if (gameHistory == NULL)
+    {
+        write_client(client->sock, "Cette partie n'existe pas frérot.\n");
+        return;
+    }
+    Game game;
+    gameInit(&game);
+    game.players[0] = gameHistory->p1;
+    game.players[1] = gameHistory->p2;
+    game.started = (gameHistory->started == gameHistory->p2) ? 1 : 0;
+    game.currentPlayer = gameHistory->started;
+    for (int i = 0; i < gameHistory->turns.length; i++)
+    {
+        int captured = 0;
+        if (!play(&game, game.currentPlayer, gameHistory->turns.data[i], &captured))
+        {
+            write_client(client->sock, "Replay corrompu c'est mort déso");
+            break;
+        }
+        game.currentPlayer = game.currentPlayer ? 0 : 1;
+        GameStatus result = gameStatus(&game, game.currentPlayer);
+
+        char board[BUF_SIZE] = {0};
+        write_client(client->sock, printGame(&game, board));
+        if (result == GAME_WIN_P0 || result == GAME_WIN_P1)
+        {
+            int winnerIndex = (result == GAME_WIN_P1) ? 1 : 0;
+            Player *winner_p = find_player_by_id(game.players[winnerIndex]);
+            Writer wstr = {};
+            w_init(&wstr);
+            w_write(&wstr, "%s a gagné, gg ez pour lui.\n", winner_p ? winner_p->name : "Unknown");
+            write_client(client->sock, w_view(&wstr));
+            w_deinit(&wstr);
+            break;
+        }
+        else if (result == GAME_DRAW)
+        {
+            write_client(client->sock, "\nT'as spectate pour r, ils ont fait égalité ces nuls\n");
+            break;
+        }
+    }
+    vec_deinit(&game.turns);
 }
 
 void handle_message(Clients *connections, Client *client, char *buffer, Games *games)
@@ -713,7 +756,7 @@ void handle_message(Clients *connections, Client *client, char *buffer, Games *g
         msg_history(client);
         break;
     case MSG_REPLAY_GAME:
-        msg_replay_game(client, message.info.pseudo);
+        msg_replay_game(client, message.replayGame.id);
         break;
     default:
         break;
