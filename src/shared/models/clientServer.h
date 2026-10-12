@@ -20,8 +20,8 @@ typedef enum
     MSG_SET_PRIVATE,
     MSG_FRIENDS,
     MSG_ADDFRIEND,
-    MSG_SEE_HISTORY,
-    MSG_REPLAY_HISTORY
+    MSG_HISTORY,
+    MSG_REPLAY_GAME
 } MsgType;
 
 typedef struct
@@ -97,7 +97,7 @@ typedef struct
 
         struct
         {
-        } lastGamePlayed;
+        } history;
 
         struct
         {

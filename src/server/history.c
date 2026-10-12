@@ -167,14 +167,17 @@ void gameHistoryForEach(void (*callback)(GameHistory *elt, void *), void *ctx, i
     }
 }
 
-void gameHistoryForEachPlayer(PlayerId of, void (*callback)(GameHistory *elt, void *ctx), void *ctx, int count)
+int gameHistoryForEachPlayer(PlayerId of, void (*callback)(GameHistory *elt, void *ctx), void *ctx)
 {
-    for (int i = histories.length - 1; i >= 0 && i >= histories.length - count; i--)
+    unsigned int count = 0;
+    for (int i = histories.length - 1; i >= 0; i--)
     {
         GameHistory *gh = &histories.data[i];
         if (of == gh->p1 || of == gh->p2)
         {
             callback(gh, ctx);
+            count++;
         }
     }
+    return count;
 }

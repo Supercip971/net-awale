@@ -114,6 +114,15 @@ int parse_message(const char *buffer, ClientServerMessage *msg)
 
         strncpy(msg->addFriend.pseudo, arg, sizeof msg->addFriend.pseudo - 1);
     }
+    else if (strcmp(command, "history") == 0)
+    {
+        msg->kind = MSG_HISTORY;
+    }
+    else if (strcmp(command, "replaygame") == 0)
+    {
+        msg->kind = MSG_REPLAY_GAME;
+        msg->replayGame.id = atoi(arg);
+    }
     else
     {
         fprintf(stderr, "Unknown command: %s\n", command);

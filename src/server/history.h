@@ -26,4 +26,4 @@ void gameHistoryDeinit();
 void gameHistoryGameEnded(Game *game, int winner);
 
 void gameHistoryForEach(void (*callback)(GameHistory *elt, void *ctx), void *ctx, int count);
-void gameHistoryPlayerForEach(PlayerId of, void (*callback)(GameHistory *elt, void *ctx), void *ctx, int count);
+int gameHistoryForEachPlayer(PlayerId of, void (*callback)(GameHistory *elt, void *ctx), void *ctx);

@@ -606,6 +606,42 @@ void msg_addFriend(Client *client, ClientServerMessage *msg)
     return;
 }
 
+void printGameHistory(GameHistory *gameHistory, void *ctx)
+{
+    Writer *writer = ctx;
+    Player *player1 = find_player_by_id(gameHistory->p1);
+    Player *player2 = find_player_by_id(gameHistory->p2);
+    Player *winner = gameHistory->winner == gameHistory->p1 ? player1 : player2;
+
+    const char *n1 = player1 ? player1->name : "Jsp ki cé";
+    const char *n2 = player2 ? player2->name : "Jsp ki cé";
+    const char *nw = winner ? winner->name : "Jsp ki cé";
+
+    w_write(writer, "\n================================\n");
+    w_write(writer, "\t\tGame n°%d\n", (int)gameHistory->id);
+    w_write(writer, "%s VS %s\n", n1, n2);
+    w_write(writer, "LE GOAT (gagnant) : %s\n", nw);
+    w_write(writer, "================================\n");
+}
+
+void msg_history(Client *client)
+{
+    Writer wstr = {};
+    w_init(&wstr);
+    int count = gameHistoryForEachPlayer(client->player, printGameHistory, &wstr);
+    if (!count)
+    {
+        write_client(client->sock, "Aucune partie jouée.");
+        return;
+    }
+    write_client(client->sock, w_view(&wstr));
+    w_deinit(&wstr);
+}
+
+void msg_replay_game(Client *client, char pseudo[MAX_USERNAME_LENGTH])
+{
+}
+
 void handle_message(Clients *connections, Client *client, char *buffer, Games *games)
 {
     // Nettoyage
@@ -670,9 +706,14 @@ void handle_message(Clients *connections, Client *client, char *buffer, Games *g
         }
         break;
     }
-
     case MSG_SET_PRIVATE:
         msg_set_private(client, games, message.setPrivate.private, connections);
+        break;
+    case MSG_HISTORY:
+        msg_history(client);
+        break;
+    case MSG_REPLAY_GAME:
+        msg_replay_game(client, message.info.pseudo);
         break;
     default:
         break;
