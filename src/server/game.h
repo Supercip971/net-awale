@@ -29,3 +29,11 @@ GameStatus gameStatus(Game *game, int nextPlayer);
 char *printGame(Game *game, char board[BUF_SIZE]);
 
 char *displayGame(Game *game, char *response, size_t size);
+
+Game *find_game(Games *games, PlayerId player);
+
+int is_player_spectating_this_game(Game *game, PlayerId player);
+
+Game *is_player_spectating_a_game(Games *games, PlayerId player);
+
+int is_player_in_game(Games *games, PlayerId player);

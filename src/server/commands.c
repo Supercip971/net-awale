@@ -43,46 +43,6 @@ Client *checkOpponent(char pseudo[MAX_USERNAME_LENGTH], Clients *connections, Cl
     return 0;
 }
 
-Game *find_game(Games *games, PlayerId player)
-{
-    for (int i = 0; i < games->length; ++i)
-    {
-        Game *cur = &games->data[i];
-        if (cur->status != IN_GAME)
-            continue;
-
-        if (cur->players[0] == player || cur->players[1] == player)
-        {
-            return cur;
-        }
-    }
-    return NULL;
-}
-
-int is_player_spectating_this_game(Game *game, PlayerId player)
-{
-    for (int i = 0; i < game->spectatorsCount; ++i)
-    {
-        if (game->spectators[i] == player)
-        {
-            return 1;
-        }
-    }
-    return 0;
-}
-
-Game *is_player_spectating_a_game(Games *games, PlayerId player)
-{
-    for (int i = 0; i < games->length; ++i)
-    {
-        if (is_player_spectating_this_game(&(games->data[i]), player))
-        {
-            return &games->data[i];
-        }
-    }
-    return NULL;
-}
-
 int findOpponentNameAndGame(Client **adversaire, Clients *connections, Games *games, Client *client, Game **res)
 {
     PlayerId opponent = INVALID_PLAYER_ID;
@@ -121,21 +81,6 @@ int findOpponentNameAndGame(Client **adversaire, Clients *connections, Games *ga
         return 0;
     }
     return 1;
-}
-
-int is_player_in_game(Games *games, PlayerId player)
-{
-    for (int i = 0; i < games->length; ++i)
-    {
-        if (games->data[i].status != IN_GAME)
-            continue;
-
-        if (games->data[i].players[0] == player || games->data[i].players[1] == player)
-        {
-            return 1;
-        }
-    }
-    return 0;
 }
 
 void msg_players(Clients *connections, Client *client)

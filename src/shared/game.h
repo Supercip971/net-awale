@@ -24,3 +24,5 @@ typedef struct Game
     GAME_STATUS status;
     Turns turns;
 } Game;
+
+typedef vec_t(Game) Games;
