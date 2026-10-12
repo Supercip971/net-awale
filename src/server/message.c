@@ -104,16 +104,15 @@ int parse_message(const char *buffer, ClientServerMessage *msg)
     }
     else if (strcmp(command, "friends") == 0)
     {
-        msg->friend.opt_pseudo[0] = 0; // default empty string
-        msg->kind = MSG_FRIEND;
+        msg->kind = MSG_FRIENDS;
     }
     else if (strcmp(command, "addfriend") == 0)
     {
-        msg->kind = MSG_FRIEND;
+        msg->kind = MSG_ADDFRIEND;
         if (arg[0] == 0)
             return -1;
 
-        strncpy(msg->friend.opt_pseudo, arg, sizeof msg->spec.pseudo - 1);
+        strncpy(msg->addFriend.pseudo, arg, sizeof msg->addFriend.pseudo - 1);
     }
     else
     {

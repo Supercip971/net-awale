@@ -7,7 +7,7 @@
 
 Players memory_db = {};
 
-PlayerId last_used_id= 0;
+PlayerId last_used_id = 0;
 FILE *player_persist = NULL;
 
 // PLAYER.json : {
@@ -28,14 +28,13 @@ void decode_json(cJSON *players)
         p.rank = cJSON_GetObjectItem(player, "rank")->valueint;
         vec_init(&p.friends);
 
-
-        if(p.user_id > last_used_id)
+        if (p.user_id > last_used_id)
             last_used_id = p.user_id;
 
-        cJSON* friends = NULL;
+        cJSON *friends = NULL;
 
         // retrocompatibility against old db without any friends field
-        if(!cJSON_HasObjectItem(player, "friends"))
+        if (!cJSON_HasObjectItem(player, "friends"))
         {
             vec_push(&memory_db, p);
             continue;
@@ -43,7 +42,7 @@ void decode_json(cJSON *players)
 
         friends = cJSON_GetObjectItem(player, "friends");
 
-        cJSON* friend;
+        cJSON *friend;
         // add each friend
         cJSON_ArrayForEach(friend, friends)
         {
@@ -63,17 +62,16 @@ cJSON *encode_json()
     for (int i = 0; i < memory_db.length; i++)
     {
         cJSON *player = cJSON_CreateObject();
-        Player* p = &memory_db.data[i];
+        Player *p = &memory_db.data[i];
         cJSON_AddNumberToObject(player, "user_id", p->user_id);
         cJSON_AddStringToObject(player, "name", p->name);
         cJSON_AddStringToObject(player, "bio", p->bio);
         cJSON_AddNumberToObject(player, "rank", p->rank);
 
-
-        cJSON* friends = cJSON_CreateArray();
-        for(int j = 0; j < p->friends.length;j++)
+        cJSON *friends = cJSON_CreateArray();
+        for (int j = 0; j < p->friends.length; j++)
         {
-            cJSON* friend_id = cJSON_CreateNumber(p->friends.data[j]);
+            cJSON *friend_id = cJSON_CreateNumber(p->friends.data[j]);
             cJSON_AddItemToArray(friends, friend_id);
         }
 

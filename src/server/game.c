@@ -161,7 +161,7 @@ char *printGame(Game *game, char board[BUF_SIZE])
     return board;
 }
 
-char *displayGame(Game *game, Writer* writer)
+char *displayGame(Game *game, Writer *writer)
 {
     Player *p1 = find_player_by_id(game->players[0]);
     Player *p2 = find_player_by_id(game->players[1]);

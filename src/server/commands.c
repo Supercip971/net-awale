@@ -567,34 +567,33 @@ void msg_set_private(Client *client, Games *games, int private, Clients *connect
     set_game_private(game, private, connections);
 }
 
-void msg_friend(Client *client, ClientServerMessage *msg)
+void msg_friends(Client *client)
 {
     Player *current = find_player_by_id(client->player);
 
     // empty
-    if (msg->friend.opt_pseudo[0] == 0)
+    Writer wstr = {};
+    w_init(&wstr);
+
+    w_write(&wstr, "Liste des amis :\n");
+    for (int i = 0; i < current->friends.length; ++i)
     {
 
-        Writer wstr = {};
-        w_init(&wstr);
-
-        w_write(&wstr, "Liste des amis :\n");
-        for (int i = 0; i < current->friends.length; ++i)
-        {
-
-            Player *friend = find_player_by_id(current->friends.data[i]);
-            const char *name = friend ? friend->name : "Anonyme(erroeur)";
-            w_write(&wstr, "- %s\n", name);
-        }
-
-        write_client(client->sock, w_view(&wstr));
-        w_deinit(&wstr);
-        return;
+        Player *friend = find_player_by_id(current->friends.data[i]);
+        const char *name = friend ? friend->name : "Anonyme(erroeur)";
+        w_write(&wstr, "- %s\n", name);
     }
 
-    // non empty add the friend
+    write_client(client->sock, w_view(&wstr));
+    w_deinit(&wstr);
+    return;
+}
 
-    Player *new_friend = find_player_by_name(msg->friend.opt_pseudo);
+void msg_addFriend(Client *client, ClientServerMessage *msg)
+{
+    Player *current = find_player_by_id(client->player);
+
+    Player *new_friend = find_player_by_name(msg->addFriend.pseudo);
 
     if (new_friend == NULL)
     {
@@ -653,8 +652,11 @@ void handle_message(Clients *connections, Client *client, char *buffer, Games *g
     case MSG_STOP_SPEC:
         msg_stop_spec(client, games);
         break;
-    case MSG_FRIEND:
-        msg_friend(client, &message);
+    case MSG_FRIENDS:
+        msg_friends(client);
+        break;
+    case MSG_ADDFRIEND:
+        msg_addFriend(client, &message);
         break;
     case MSG_SETBIO:
     {
