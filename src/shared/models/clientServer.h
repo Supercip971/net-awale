@@ -14,7 +14,8 @@ typedef enum
     MSG_MESSAGE,
     MSG_SPEC,
     MSG_STOP_SPEC,
-    MSG_SETBIO
+    MSG_SETBIO,
+    MSG_SET_PRIVATE
 } MsgType;
 
 typedef struct
@@ -63,5 +64,9 @@ typedef struct
         {
             char pseudo[MAX_USERNAME_LENGTH];
         } info;
+        struct
+        {
+            int private;
+        } setPrivate;
     };
 } ClientServerMessage;

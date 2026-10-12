@@ -23,6 +23,7 @@ typedef struct Game
     int spectatorsCount;
     GAME_STATUS status;
     Turns turns;
+    int private;
 } Game;
 
 typedef vec_t(Game) Games;

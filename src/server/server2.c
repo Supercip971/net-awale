@@ -7,7 +7,6 @@
 #include "server/commands.h"
 #include "server/history.h"
 #include "server/message.h"
-#include "server/models/games.h"
 #include "server/player.h"
 #include "server/server2.h"
 #include "shared/game.h"
@@ -146,7 +145,7 @@ void app(void)
 
             // On enlève les \r et \n des pseudos
             buffer[strcspn(buffer, "\r\n")] = 0;
-            if (buffer[0] == 0 || strlen(buffer) >= MAX_USERNAME_LENGTH || check_name_exist(&clients,  buffer))
+            if (buffer[0] == 0 || strlen(buffer) >= MAX_USERNAME_LENGTH || check_name_exist(&clients, buffer))
             {
                 write_client(csock, "Le pseudo existe déjà. Sois original stp\n");
                 closesocket(csock);

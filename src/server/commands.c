@@ -6,10 +6,8 @@
 #include "server/game.h"
 #include "server/history.h"
 #include "server/message.h"
-#include "server/models/games.h"
 #include "server/player.h"
 #include "server/server2.h"
-#include "shared/game.h"
 #include "shared/vec.h"
 
 // TODO: Refactor with a map player: socket (avoiding n loops)
@@ -375,6 +373,12 @@ void msg_spec(Clients *connections, Client *client, Games *games, ClientServerMe
         return;
     }
 
+    if (game->private)
+    {
+        write_client(client->sock, "NANANANAN C'EST PRIVE.");
+        return;
+    }
+
     game->spectators[game->spectatorsCount++] = client->player;
 
     Player *client_p = find_player_by_id(client->player);
@@ -541,6 +545,12 @@ void msg_play(Clients *connections, Client *client, Games *games, ClientServerMe
     }
 }
 
+void msg_set_private(Client *client, Games *games, int private, Clients *connections)
+{
+    Game *game = find_game(games, client->player);
+    set_game_private(game, private, connections);
+}
+
 void handle_message(Clients *connections, Client *client, char *buffer, Games *games)
 {
     // Nettoyage
@@ -599,6 +609,9 @@ void handle_message(Clients *connections, Client *client, char *buffer, Games *g
         }
         break;
     }
+    case MSG_SET_PRIVATE:
+        msg_set_private(client, games, message.setPrivate.private, connections);
+        break;
     default:
         break;
     }

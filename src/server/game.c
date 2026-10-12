@@ -1,4 +1,6 @@
 #include "game.h"
+#include "client2.h"
+#include "server/message.h"
 #include "server/player.h"
 
 void gameInit(Game *game)
@@ -13,6 +15,7 @@ void gameInit(Game *game)
     game->status = WAITING;
     int randomIndex = rand() % 2;
     game->currentPlayer = randomIndex;
+    game->private = 0;
     vec_init(&game->turns);
 }
 
@@ -221,4 +224,23 @@ Game *is_player_spectating_a_game(Games *games, PlayerId player)
         }
     }
     return NULL;
+}
+
+void set_game_private(Game *game, int private, Clients *connections)
+{
+    game->private = private;
+    if (!private)
+        return;
+    for (int i = 0; i < game->spectatorsCount; ++i)
+    {
+        for (int j = 0; j < connections->length; ++j)
+        {
+            if (connections->data[j].player == game->spectators[i])
+            {
+                write_client(connections->data[j].sock, "T'ES KICK ILS PREFERENT RESTER EN PV\n");
+                break;
+            }
+        }
+    }
+    game->spectatorsCount = 0;
 }

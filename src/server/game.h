@@ -1,6 +1,7 @@
 #pragma once
 
 #include <stdio.h>
+#include "server/client2.h"
 #include "server/common.h"
 #include "shared/game.h"
 
@@ -37,3 +38,5 @@ int is_player_spectating_this_game(Game *game, PlayerId player);
 Game *is_player_spectating_a_game(Games *games, PlayerId player);
 
 int is_player_in_game(Games *games, PlayerId player);
+
+void set_game_private(Game *game, int private, Clients *connections);

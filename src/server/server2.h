@@ -2,7 +2,6 @@
 
 #include "server/client2.h"
 #include "server/common.h"
-#include "server/models/games.h"
 
 void init(void);
 void end(void);

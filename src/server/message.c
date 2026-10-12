@@ -96,9 +96,13 @@ int parse_message(const char *buffer, ClientServerMessage *msg)
         strncpy(msg->info.pseudo, arg, sizeof msg->info.pseudo - 1);
         msg->info.pseudo[sizeof msg->info.pseudo - 1] = 0;
     }
+    else if (strcmp(command, "setprivate") == 0)
+    {
+        msg->kind = MSG_SET_PRIVATE;
+        msg->setPrivate.private = atoi(arg);
+    }
     else
     {
-
         fprintf(stderr, "Unknown command: %s\n", command);
         return -1;
     }
