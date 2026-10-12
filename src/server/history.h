@@ -8,8 +8,10 @@
 
 // player play
 
+typedef uint64_t GameHistoryId;
 typedef struct GameHistory
 {
+    GameHistoryId id;
     Turns turns;
     PlayerId p1;
     PlayerId p2;

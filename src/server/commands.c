@@ -10,6 +10,7 @@
 #include "server/server2.h"
 #include "shared/models/clientServer.h"
 #include "shared/vec.h"
+#include "shared/writer.h"
 
 // TODO: Refactor with a map player: socket (avoiding n loops)
 
@@ -84,64 +85,65 @@ int findOpponentNameAndGame(Client **adversaire, Clients *connections, Games *ga
 
 void msg_players(Clients *connections, Client *client)
 {
-    char response[BUF_SIZE] = "Liste des petits filous connectés :\n";
-    size_t offset = strlen(response);
+    Writer wstr = {};
+    w_init(&wstr);
+    w_write(&wstr, "Liste des petits filous connectés :\n");
     for (int i = 0; i < connections->length; ++i)
     {
         Player *player = find_player_by_id(connections->data[i].player);
         const char *name = player ? player->name : "Anonyme(erroeur)";
-        int l = snprintf(response + offset, sizeof response - offset, "- %s\n", name);
-        if (l < 0 || (size_t)l >= sizeof response - offset)
-            break;
-        offset += l;
+        w_write(&wstr, "- %s\n", name);
     }
 
-    write_client(client->sock, response);
+    write_client(client->sock, w_view(&wstr));
+    w_deinit(&wstr);
 }
 
 void msg_player_info(Client *client, const char *pname)
 {
-    char response[BUF_SIZE] = {};
+    Writer wstr = {};
+    w_init(&wstr);
     Player *player = find_player_by_name(pname);
     if (player)
     {
-        int l = snprintf(response, sizeof response, "Information sur le joueur %s :\n"
-                                                    "  Bio: %s\n"
-                                                    "  Rank: %d\n",
-                         player->name, player->bio, player->rank);
-        if (l < 0 || (size_t)l >= sizeof response)
-            return;
-        write_client(client->sock, response);
+        w_write(&wstr, "Information sur le joueur %s :\n"
+                       "  Bio: %s\n"
+                       "  Rank: %d\n",
+                player->name, player->bio, player->rank);
+        write_client(client->sock, w_view(&wstr));
+        w_deinit(&wstr);
         return;
     }
-    char noPlayerResponse[BUF_SIZE] = "Joueur non trouvé.\n";
-    write_client(client->sock, noPlayerResponse);
+    write_client(client->sock, "Joueur non trouvé.\n");
 }
 
 void msg_games(Games *games, Client *client)
 {
+
     unsigned int runningGamesCount = 0;
-    char response[BUF_SIZE] = "Liste des COMBATS DE TITANS :\n";
-    size_t offset = strlen(response);
+
+    Writer wstr = {};
+    w_init(&wstr);
+    w_write(&wstr, "Liste des COMBATS DE TITANS :\n");
     for (int i = 0; i < games->length; ++i)
     {
         if (games->data[i].status != IN_GAME)
             continue;
-        char gameDisplay[BUF_SIZE] = {0};
-        displayGame(&(games->data[i]), gameDisplay, sizeof gameDisplay);
-        int l = snprintf(response + offset, sizeof response - offset, "- %s\n", gameDisplay);
-        if (l < 0 || (size_t)l >= sizeof response - offset)
-            break;
-        offset += l;
+        w_write(&wstr, "- ");
+        displayGame(&(games->data[i]), &wstr);
+        w_write(&wstr, "\n");
+
         ++runningGamesCount;
     }
     if (!runningGamesCount)
     {
-        char noGameResponse[BUF_SIZE] = "Aucun combat de titan. Lances-en un dcp stp\n";
-        write_client(client->sock, noGameResponse);
+        write_client(client->sock, "Aucun combat de titan. Lances-en un dcp stp\n");
         return;
     }
-    write_client(client->sock, response);
+
+    write_client(client->sock, w_view(&wstr));
+
+    w_deinit(&wstr);
 }
 
 void msg_message(Clients *connections, Client *client, ClientServerMessage *message)
@@ -267,10 +269,14 @@ void msg_defy(Clients *connections, Client *client, Games *games, ClientServerMe
     vec_push(games, newGame);
 
     Player *client_p = find_player_by_id(client->player);
-    char invitation[BUF_SIZE] = {};
-    snprintf(invitation, sizeof invitation, "1V1 NO RE CONTRE %s ?\n", client_p ? client_p->name : "Unknown");
 
-    write_client(adversaire->sock, invitation);
+    Writer wstr = {};
+
+    w_init(&wstr);
+    w_write(&wstr, "1V1 NO RE CONTRE %s ?\n", client_p ? client_p->name : "Unknown");
+
+    write_client(adversaire->sock, w_view(&wstr));
+    w_deinit(&wstr);
 }
 
 void msg_decline_defy(Clients *connections, Client *client, Games *games, ClientServerMessage *message)
@@ -302,9 +308,12 @@ void msg_decline_defy(Clients *connections, Client *client, Games *games, Client
     }
 
     Player *client_p = find_player_by_id(client->player);
-    char invitations[BUF_SIZE] = {};
-    snprintf(invitations, sizeof invitations, "déso, %s a trop peur, il a refusé\n", client_p ? client_p->name : "Unknown");
-    write_client(adversaire->sock, invitations);
+
+    Writer wstr = {};
+    w_init(&wstr);
+    w_write(&wstr, "déso, %s a trop peur, il a refusé\n", client_p ? client_p->name : "Unknown");
+    write_client(adversaire->sock, w_view(&wstr));
+    w_deinit(&wstr);
 }
 
 int get_players_clients(Clients *connections, Game *game, Client **opponent1, Client **opponent2)
@@ -383,11 +392,13 @@ void msg_spec(Clients *connections, Client *client, Games *games, ClientServerMe
     game->spectators[game->spectatorsCount++] = client->player;
 
     Player *client_p = find_player_by_id(client->player);
-    const char *name = client_p ? client_p->name : "Un inconnu";
-    char messageSpec[BUF_SIZE] = {0};
-    snprintf(messageSpec, sizeof messageSpec, "%s se cache dans les buissons pour vous observer...\n", name);
-    write_client(p0->sock, messageSpec);
-    write_client(p1->sock, messageSpec);
+
+    Writer wstr = {};
+    w_init(&wstr);
+
+    w_write(&wstr, "%s se cache dans les buissons pour vous observer...\n", client_p ? client_p->name : "Un inconnu");
+    write_client(p0->sock, w_view(&wstr));
+    write_client(p1->sock, w_view(&wstr));
     write_client(client->sock, "T'es maintenant en mode spectateur, enjoy le spectacle frérot\n");
 }
 
@@ -472,8 +483,9 @@ void msg_play(Clients *connections, Client *client, Games *games, ClientServerMe
             write_client(p0->sock, "\nT'as gagné frérot, gg.\n");
             write_client(p1->sock, "\nT'as perdu frérot, laonte.\n");
             Player *winner_p = find_player_by_id(p0->player);
-            char spectatorMessage[BUF_SIZE] = {0};
-            snprintf(spectatorMessage, sizeof spectatorMessage, "%s a gagné, gg ez pour lui.\n", winner_p ? winner_p->name : "Unknown");
+            Writer wstr = {};
+            w_init(&wstr);
+            w_write(&wstr, "%s a gagné, gg ez pour lui.\n", winner_p ? winner_p->name : "Unknown");
             for (int i = 0; i < game->spectatorsCount; ++i)
             {
                 for (int j = 0; j < connections->length; ++j)
@@ -481,11 +493,12 @@ void msg_play(Clients *connections, Client *client, Games *games, ClientServerMe
                     Client *spectator = &connections->data[j];
                     if (spectator->player == game->spectators[i])
                     {
-                        write_client(spectator->sock, spectatorMessage);
+                        write_client(spectator->sock, w_view(&wstr));
                         break;
                     }
                 }
             }
+            w_deinit(&wstr);
         }
         else if (result == GAME_WIN_P1)
         {
@@ -494,8 +507,9 @@ void msg_play(Clients *connections, Client *client, Games *games, ClientServerMe
             write_client(p1->sock, "\nT'as gagné frérot, gg.\n");
             write_client(p0->sock, "\nT'as perdu frérot, laonte.\n");
             Player *winner_p = find_player_by_id(p1->player);
-            char spectatorMessage[BUF_SIZE] = {0};
-            snprintf(spectatorMessage, sizeof spectatorMessage, "%s a gagné, gg ez pour lui.\n", winner_p ? winner_p->name : "Unknown");
+            Writer wstr = {};
+            w_init(&wstr);
+            w_write(&wstr, "%s a gagné, gg ez pour lui.\n", winner_p ? winner_p->name : "Unknown");
             for (int i = 0; i < game->spectatorsCount; ++i)
             {
                 for (int j = 0; j < connections->length; ++j)
@@ -503,11 +517,12 @@ void msg_play(Clients *connections, Client *client, Games *games, ClientServerMe
                     Client *spectator = &connections->data[j];
                     if (spectator->player == game->spectators[i])
                     {
-                        write_client(spectator->sock, spectatorMessage);
+                        write_client(spectator->sock, w_view(&wstr));
                         break;
                     }
                 }
             }
+            w_deinit(&wstr);
         }
         else if (result == GAME_DRAW)
         {
@@ -552,36 +567,36 @@ void msg_set_private(Client *client, Games *games, int private, Clients *connect
     set_game_private(game, private, connections);
 }
 
-void msg_friend(Client *client, ClientServerMessage* msg)
+void msg_friend(Client *client, ClientServerMessage *msg)
 {
-    Player* current = find_player_by_id(client->player);
+    Player *current = find_player_by_id(client->player);
 
     // empty
-    if(msg->friend.opt_pseudo[0] == 0)
+    if (msg->friend.opt_pseudo[0] == 0)
     {
-        char response[BUF_SIZE] = "Liste des amis :\n";
-        size_t offset = strlen(response);
+
+        Writer wstr = {};
+        w_init(&wstr);
+
+        w_write(&wstr, "Liste des amis :\n");
         for (int i = 0; i < current->friends.length; ++i)
         {
 
             Player *friend = find_player_by_id(current->friends.data[i]);
             const char *name = friend ? friend->name : "Anonyme(erroeur)";
-            int l = snprintf(response + offset, sizeof response - offset, "- %s\n", name);
-            if (l < 0 || (size_t)l >= sizeof response - offset)
-                break;
-            offset += l;
+            w_write(&wstr, "- %s\n", name);
         }
 
-        write_client(client->sock, response);
+        write_client(client->sock, w_view(&wstr));
+        w_deinit(&wstr);
         return;
     }
 
-
     // non empty add the friend
 
-    Player * new_friend = find_player_by_name(msg->friend.opt_pseudo);
+    Player *new_friend = find_player_by_name(msg->friend.opt_pseudo);
 
-    if(new_friend == NULL)
+    if (new_friend == NULL)
     {
         write_client(client->sock, "error: friend non existant");
         return;
@@ -653,6 +668,7 @@ void handle_message(Clients *connections, Client *client, char *buffer, Games *g
         }
         break;
     }
+
     case MSG_SET_PRIVATE:
         msg_set_private(client, games, message.setPrivate.private, connections);
         break;

@@ -3,8 +3,9 @@
 #include "server/game.h"
 #include "shared/json/cJSON.h"
 
-FILE *game_hist = NULL;
-GameHistories histories = {};
+static FILE *game_hist = NULL;
+static GameHistories histories = {};
+static GameHistoryId last_id = 1;
 
 static cJSON *gameHistoryEncode(GameHistory *gh)
 {
@@ -34,6 +35,10 @@ static cJSON *gameHistoryEncode(GameHistory *gh)
     }
 
     cJSON_AddItemToObject(root, "plays", plays);
+
+    auto id = cJSON_CreateNumber(gh->id);
+    cJSON_AddItemToObject(root, "id", id);
+
     return root;
 }
 
@@ -44,7 +49,7 @@ static GameHistory *gameHistoryDecode(cJSON *gObject)
     gh->p1 = cJSON_GetObjectItem(gObject, "p1")->valueint;
     gh->p2 = cJSON_GetObjectItem(gObject, "p2")->valueint;
     gh->winner = cJSON_GetObjectItem(gObject, "winner")->valuedouble;
-
+    gh->id = cJSON_GetObjectItem(gObject, "id")->valueint;
     vec_init(&gh->turns);
 
     auto plays = cJSON_GetObjectItem(gObject, "plays");
@@ -53,6 +58,9 @@ static GameHistory *gameHistoryDecode(cJSON *gObject)
         auto play = cJSON_GetArrayItem(plays, i);
         vec_push(&gh->turns, cJSON_GetNumberValue(play));
     }
+
+    if (gh->id > last_id)
+        last_id = gh->id;
     return gh;
 }
 
@@ -139,11 +147,13 @@ static void gameHistoryPersist(GameHistory *hist)
 
 void gameHistoryGameEnded(Game *game, int winner)
 {
+    last_id++;
     GameHistory hist = {
         .turns = game->turns,
         .p1 = game->players[0],
         .p2 = game->players[1],
         .winner = game->players[winner],
+        .id = last_id,
     };
     gameHistoryPersist(&hist);
 }
@@ -162,7 +172,7 @@ void gameHistoryForEachPlayer(PlayerId of, void (*callback)(GameHistory *elt, vo
     for (int i = histories.length - 1; i >= 0 && i >= histories.length - count; i--)
     {
         GameHistory *gh = &histories.data[i];
-        if(of == gh->p1 || of == gh->p2)
+        if (of == gh->p1 || of == gh->p2)
         {
             callback(gh, ctx);
         }

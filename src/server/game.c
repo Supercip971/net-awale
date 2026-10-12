@@ -161,14 +161,12 @@ char *printGame(Game *game, char board[BUF_SIZE])
     return board;
 }
 
-char *displayGame(Game *game, char *response, size_t size)
+char *displayGame(Game *game, Writer* writer)
 {
     Player *p1 = find_player_by_id(game->players[0]);
     Player *p2 = find_player_by_id(game->players[1]);
-    strncat(response, p1 ? p1->name : "Joueur 1", size - strlen(response) - 1);
-    strncat(response, " VS ", size - strlen(response) - 1);
-    strncat(response, p2 ? p2->name : "Joueur 2", size - strlen(response) - 1);
-    return response;
+    w_write(writer, "%s VS %s", p1 ? p1->name : "Joueur 1", p2 ? p2->name : "Joueur 2");
+    return writer->data;
 }
 
 Game *find_game(Games *games, PlayerId player)
