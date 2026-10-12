@@ -130,25 +130,27 @@ void app(void)
 
             if (clients.length >= MAX_CLIENTS)
             {
-                printf("Serveur plein CLAMERD");
-                write_client(csock, "Serveur plein.\n");
+                printf("Serveur plein CLAMERD\n");
+                write_client_error(csock, "Serveur plein.\n");
                 closesocket(csock);
                 continue;
             }
 
             /* after connecting the client sends its name */
-            if (read_client(csock, buffer) <= 0)
+            int n = recv(csock, buffer, MAX_USERNAME_LENGTH - 1, 0);
+            if (n <= 0)
             {
                 /* disconnected */
                 closesocket(csock);
                 continue;
             }
+            buffer[n] = 0;
 
             // On enlève les \r et \n des pseudos
             buffer[strcspn(buffer, "\r\n")] = 0;
             if (buffer[0] == 0 || strlen(buffer) >= MAX_USERNAME_LENGTH || check_name_exist(&clients, buffer))
             {
-                write_client(csock, "Le pseudo existe déjà. Sois original stp\n");
+                write_client_error(csock, "Le pseudo existe déjà. Sois original stp\n");
                 closesocket(csock);
                 continue;
             }
@@ -254,7 +256,7 @@ void send_message_to_all_clients(Clients *clients, Client sender, const char *bu
             }
 
             offset += snprintf(message + offset, sizeof message - offset, "%s", buffer);
-            write_client(client.sock, message);
+            write_client_status(client.sock, message);
         }
     }
 }
@@ -299,16 +301,24 @@ void end_connection(int sock)
 
 int read_client(SOCKET sock, char *buffer)
 {
-    int n = 0;
-
-    if ((n = recv(sock, buffer, sizeof(ClientServerMessage), 0)) < 0)
+    size_t total = 0;
+    while (total < sizeof(ClientServerMessage))
     {
-        perror("recv()");
-        /* if recv error we disonnect the client */
-        n = 0;
+        int n = recv(sock, buffer + total, sizeof(ClientServerMessage) - total, 0);
+        if (n < 0)
+        {
+            perror("recv()");
+            /* if recv error we disconnect the client */
+            return 0;
+        }
+        if (n == 0)
+        {
+            return 0;
+        }
+        total += n;
     }
 
-    return n;
+    return total;
 }
 
 int main(void)

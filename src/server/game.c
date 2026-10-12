@@ -23,7 +23,7 @@ void gameInit(Game *game)
 static int sideSum(const Game *g, int side)
 {
     int s = 0;
-    for (int i = 0; i < 6; i++)
+    for (int i = 0; i < 6; i++)\
         s += g->board[i + side * 6];
     return s;
 }
@@ -122,54 +122,6 @@ GameStatus gameStatus(Game *game, int nextPlayer)
     return GAME_ONGOING;
 }
 
-char *printGame(Game *game, char board[BUF_SIZE])
-{
-    char *p = board;
-    char player1Name[MAX_USERNAME_LENGTH] = {0};
-    char player2Name[MAX_USERNAME_LENGTH] = {0};
-    Player *p1 = find_player_by_id(game->players[0]);
-    Player *p2 = find_player_by_id(game->players[1]);
-    Player *curr = find_player_by_id(game->players[game->currentPlayer]);
-    snprintf(player1Name, sizeof player1Name, "%s", p1 ? p1->name : "Joueur 1");
-    snprintf(player2Name, sizeof player2Name, "%s", p2 ? p2->name : "Joueur 2");
-    const char *currName = curr ? curr->name : "Inconnu";
-    p += sprintf(p, "Grenier du joueur 1 (%s): %d\n\n"
-                    "\n"
-                    "\t 0\t\t 1\t\t 2\t\t 3\t\t 4\t\t 5\t\n"
-                    "\n"
-                    "*-----------------------------------------------------------------------------------------------*\n"
-                    "|                                                                                               |\n",
-                 player1Name, game->hands[0]);
-    for (int i = 0; i < 6; i++)
-    {
-        p += sprintf(p, "|\t%2d\t", game->board[i]);
-    }
-    p += sprintf(p, "|\n"
-                    "|                                                                                               |\n"
-                    "*-----------------------------------------------------------------------------------------------*\n"
-                    "|                                                                                               |\n");
-    for (int i = 11; i >= 6; --i)
-    {
-        p += sprintf(p, "|\t%2d\t", game->board[i]);
-    }
-    p += sprintf(p, "|\n"
-                    "|                                                                                               |\n"
-                    "*-----------------------------------------------------------------------------------------------*\n"
-                    "\n"
-                    "\t 5\t\t 4\t\t 3\t\t 2\t\t 1\t\t 0\t\n"
-                    "\n");
-    p += sprintf(p, "\nGrenier du joueur 2 (%s): %d\n\nAu tour de %s de jouer !\n", player2Name, game->hands[1], currName);
-    return board;
-}
-
-char *displayGame(Game *game, Writer *writer)
-{
-    Player *p1 = find_player_by_id(game->players[0]);
-    Player *p2 = find_player_by_id(game->players[1]);
-    w_write(writer, "%s VS %s", p1 ? p1->name : "Joueur 1", p2 ? p2->name : "Joueur 2");
-    return writer->data;
-}
-
 Game *find_game(Games *games, PlayerId player)
 {
     for (int i = 0; i < games->length; ++i)
@@ -245,7 +197,7 @@ void set_game_private(Game *game, int private, Clients *connections)
         {
             if (connections->data[j].player == game->spectators[i])
             {
-                write_client(connections->data[j].sock, "T'ES KICK ILS PREFERENT RESTER EN PV\n");
+                write_client_status(connections->data[j].sock, "T'ES KICK ILS PREFERENT RESTER EN PV\n");
                 break;
             }
         }

@@ -156,7 +156,7 @@ void vec_swap_(char **data, int *length, int *capacity, int memsz,
                int idx1, int idx2);
 
 typedef vec_t(void *) vec_void_t;
-typedef vec_t(char *) vec_str_t;
+typedef vec_t(const char *) vec_str_t;
 typedef vec_t(int) vec_int_t;
 typedef vec_t(char) vec_char_t;
 typedef vec_t(float) vec_float_t;

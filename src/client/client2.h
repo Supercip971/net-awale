@@ -1,6 +1,7 @@
 #ifndef CLIENT_H
 #define CLIENT_H
 
+#include "shared/models/serverClient.h"
 #ifdef WIN32
 
 #    include <winsock2.h>
@@ -32,12 +33,13 @@ typedef struct in_addr IN_ADDR;
 
 #define BUF_SIZE 1024
 
-static void init(void);
-static void end(void);
-static void app(const char *address, const char *name);
-static int init_connection(const char *address);
-static void end_connection(int sock);
-static int read_server(SOCKET sock, char *buffer);
-static void write_server(SOCKET sock, const char *buffer);
+void init(void);
+void end(void);
+void app(const char *address, const char *name);
+int init_connection(const char *address);
+void end_connection(int sock);
+int read_server(SOCKET sock, char *buffer, size_t len);
+void write_server(SOCKET sock, const char *buffer);
 
+void receive_message(SOCKET sock, Server2ClientMessage *msg);
 #endif /* guard */

@@ -27,6 +27,13 @@ typedef struct in_addr IN_ADDR;
 
 #endif
 
+//  INSA in ascii => hexadecimal
+// this is used to check 2 things:
+// we are receiving a message expected and the endianness is correct
+// this is done in protocol resolution in general and is a good way to check if the message is valid
+
+#define PROTOCOL_MAGIC 0x494e5341
+
 #define CRLF "\r\n"
 #define PORT 1977
 #define MAX_CLIENTS 100

@@ -1,6 +1,9 @@
 
 #include "parser.h"
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include "shared/helper.h"
 #include "shared/models/clientServer.h"
 
 ClientServerMessage *encode_message(const char *buffer)
@@ -39,8 +42,7 @@ ClientServerMessage *encode_message(const char *buffer)
         if (space == NULL || space[1] == 0)
             return NULL;
         msg->kind = MSG_MESSAGE;
-        strncpy(msg->message.message, space + 1, sizeof msg->message.message - 1);
-        msg->message.message[sizeof msg->message.message - 1] = 0;
+        strccpy(msg->message.message, space + 1, sizeof(msg->message.message));
     }
     else if (strcmp(command, "defy") == 0)
     {
@@ -48,8 +50,7 @@ ClientServerMessage *encode_message(const char *buffer)
             return NULL;
 
         msg->kind = MSG_DEFY;
-        strncpy(msg->defy.pseudo, arg, sizeof msg->defy.pseudo - 1);
-        msg->defy.pseudo[sizeof msg->defy.pseudo - 1] = 0;
+        strccpy(msg->defy.pseudo, arg, sizeof(msg->defy.pseudo));
     }
     else if (strcmp(command, "decline") == 0)
     {
@@ -57,8 +58,7 @@ ClientServerMessage *encode_message(const char *buffer)
             return NULL;
 
         msg->kind = MSG_DECLINE_DEFY;
-        strncpy(msg->declineDefy.pseudo, arg, sizeof msg->declineDefy.pseudo - 1);
-        msg->declineDefy.pseudo[sizeof msg->declineDefy.pseudo - 1] = 0;
+        strccpy(msg->declineDefy.pseudo, arg, sizeof(msg->declineDefy.pseudo));
     }
     else if (strcmp(command, "accept") == 0)
     {
@@ -66,8 +66,7 @@ ClientServerMessage *encode_message(const char *buffer)
             return NULL;
 
         msg->kind = MSG_ACCEPT_DEFY;
-        strncpy(msg->acceptDefy.pseudo, arg, sizeof msg->acceptDefy.pseudo - 1);
-        msg->acceptDefy.pseudo[sizeof msg->acceptDefy.pseudo - 1] = 0;
+        strccpy(msg->acceptDefy.pseudo, arg, sizeof(msg->acceptDefy.pseudo));
     }
     else if (strcmp(command, "spec") == 0)
     {
@@ -75,8 +74,7 @@ ClientServerMessage *encode_message(const char *buffer)
             return NULL;
 
         msg->kind = MSG_SPEC;
-        strncpy(msg->spec.pseudo, arg, sizeof msg->spec.pseudo - 1);
-        msg->spec.pseudo[sizeof msg->spec.pseudo - 1] = 0;
+        strccpy(msg->spec.pseudo, arg, sizeof(msg->spec.pseudo));
     }
     else if (strcmp(command, "stopspec") == 0)
     {
@@ -88,13 +86,12 @@ ClientServerMessage *encode_message(const char *buffer)
         if (space == NULL || space[1] == 0)
             return NULL;
         msg->kind = MSG_SETBIO;
-        strncpy(msg->setbio.bio, space + 1, sizeof msg->setbio.bio - 1);
-        msg->setbio.bio[sizeof msg->setbio.bio - 1] = 0;
+        strccpy(msg->setbio.bio, space + 1, sizeof(msg->setbio.bio));
     }
     else if (strcmp(command, "info") == 0)
     {
         msg->kind = MSG_INFO;
-        strncpy(msg->info.pseudo, arg, sizeof msg->info.pseudo - 1);
+        strccpy(msg->info.pseudo, arg, sizeof(msg->info.pseudo));
     }
     else if (strcmp(command, "setprivate") == 0)
     {
@@ -111,7 +108,7 @@ ClientServerMessage *encode_message(const char *buffer)
         if (arg[0] == 0)
             return NULL;
 
-        strncpy(msg->addFriend.pseudo, arg, sizeof msg->addFriend.pseudo - 1);
+        strccpy(msg->addFriend.pseudo, arg, sizeof(msg->addFriend.pseudo));
     }
     else if (strcmp(command, "history") == 0)
     {

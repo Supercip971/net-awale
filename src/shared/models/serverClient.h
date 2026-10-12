@@ -1,54 +1,101 @@
 #pragma once
+#include "server/common.h"
 #include "shared/game.h"
 #include "shared/models/const.h"
+#include "shared/models/shared.h"
+
 
 typedef enum
 {
-    MSG_STATUS, // a custom string displaying a status
-    MSG_CONNECT,
-    MSG_PLAYERS,
-    MSG_PLAY,
-    MSG_DEFY,
-    MSG_ACCEPT_DEFY,
-    MSG_DECLINE_DEFY
-} MsgType;
+    MSG_RET_STATUS, // a custom string displaying a status
+    MSG_RET_PLAYERS_STREAM,
+    MSG_RET_INFO,
+    MSG_RET_GAMES_STREAM,
+    MSG_RET_GAME_BOARD,
+    MSG_RET_DEFY_NOTIFY,
+    MSG_RET_OBSERVER_NOTIFY,
+    MSG_RET_WINNER,
+    MSG_RET_FRIENDS_STREAM,
+    MSG_RET_HISTORY_STREAM,
+    MSG_RET_END
+} MsgServerType;
 
-typedef enum
-{
-    RESULT_OK = 0,
-    RESULT_ERROR
-} ResultKind;
-
-typedef char Pseudo[MAX_USERNAME_LENGTH];
+//  INSA in ascii => hexadecimal
+// this is used to check 2 things:
+// we are receiving a message expected and the endianness is correct
+// this is done in protocol resolution in general and is a good way to check if the message is valid
 
 typedef struct
 {
-    MsgType kind;
+    Username p1;
+    Username p2;
+    int id;
+    Username winner;
+} MsgGame;
 
-    ResultKind error; // non null if it contain an error
+typedef struct
+{
+    uint64_t magic;
+    MsgServerType kind;
+
     union
     {
-        // connect: empty
         struct
         {
-            Pseudo pseudo[];
-        } players;
-        // played: empty
+            bool is_error;
+            char msg[1024];
+        } status;
+
         struct
         {
-            char pseudo[MAX_USERNAME_LENGTH];
-        } accepted;
+            Username names[16];
+        } onlinePlayersSet; // STREAMED
+
         struct
         {
-            char pseudo[MAX_USERNAME_LENGTH];
-        } declined;
+            Username name;
+            char bio[256];
+            int rank;
+        } playerInfo;
+
         struct
         {
-            char pseudo[MAX_USERNAME_LENGTH];
-        } defyReceived;
+            MsgGame games[8];
+        } gamesSet; // STREAMED
+
         struct
         {
-            Game game;
-        } movePlayed;
+            int board[12];
+            int hands[2];
+            Username p1;
+            Username p2;
+            int currentPlayer;
+        } gameBoard;
+
+        struct
+        {
+            Username defier;
+        } defyNotify;
+
+        struct
+        {
+            Username spectator;
+        } observerNotify;
+
+        struct
+        {
+            Username winner;
+            bool is_draw;
+        } winnerNotify;
+
+        struct
+        {
+            Username friends[16];
+        } friendsSet; // STREAMED
+
+        struct
+        {
+            MsgGame games[8];
+        } gamesSetHistory; // STREAMED
     };
-} ClientServerMessage;
+} Server2ClientMessage;
