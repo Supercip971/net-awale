@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include "shared/models/clientServer.h"
 
 void write_client(SOCKET sock, const char *buffer)
 {
@@ -16,6 +17,7 @@ int parse_message(const char *buffer, ClientServerMessage *msg)
     char command[32] = {0};
     char arg[BUF_SIZE] = {0};
 
+    *msg = (ClientServerMessage){0};
     if (sscanf(buffer, "%31s %s", command, arg) < 1)
         return -1;
 
@@ -94,12 +96,24 @@ int parse_message(const char *buffer, ClientServerMessage *msg)
     {
         msg->kind = MSG_INFO;
         strncpy(msg->info.pseudo, arg, sizeof msg->info.pseudo - 1);
-        msg->info.pseudo[sizeof msg->info.pseudo - 1] = 0;
     }
     else if (strcmp(command, "setprivate") == 0)
     {
         msg->kind = MSG_SET_PRIVATE;
         msg->setPrivate.private = atoi(arg);
+    }
+    else if (strcmp(command, "friends") == 0)
+    {
+        msg->friend.opt_pseudo[0] = 0; // default empty string
+        msg->kind = MSG_FRIEND;
+    }
+    else if (strcmp(command, "addfriend") == 0)
+    {
+        msg->kind = MSG_FRIEND;
+        if (arg[0] == 0)
+            return -1;
+
+        strncpy(msg->friend.opt_pseudo, arg, sizeof msg->spec.pseudo - 1);
     }
     else
     {

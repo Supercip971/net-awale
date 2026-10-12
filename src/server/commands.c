@@ -8,6 +8,7 @@
 #include "server/message.h"
 #include "server/player.h"
 #include "server/server2.h"
+#include "shared/models/clientServer.h"
 #include "shared/vec.h"
 
 // TODO: Refactor with a map player: socket (avoiding n loops)
@@ -551,6 +552,46 @@ void msg_set_private(Client *client, Games *games, int private, Clients *connect
     set_game_private(game, private, connections);
 }
 
+void msg_friend(Client *client, ClientServerMessage* msg)
+{
+    Player* current = find_player_by_id(client->player);
+
+    // empty
+    if(msg->friend.opt_pseudo[0] == 0)
+    {
+        char response[BUF_SIZE] = "Liste des amis :\n";
+        size_t offset = strlen(response);
+        for (int i = 0; i < current->friends.length; ++i)
+        {
+
+            Player *friend = find_player_by_id(current->friends.data[i]);
+            const char *name = friend ? friend->name : "Anonyme(erroeur)";
+            int l = snprintf(response + offset, sizeof response - offset, "- %s\n", name);
+            if (l < 0 || (size_t)l >= sizeof response - offset)
+                break;
+            offset += l;
+        }
+
+        write_client(client->sock, response);
+        return;
+    }
+
+
+    // non empty add the friend
+
+    Player * new_friend = find_player_by_name(msg->friend.opt_pseudo);
+
+    if(new_friend == NULL)
+    {
+        write_client(client->sock, "error: friend non existant");
+        return;
+    }
+
+    vec_push(&current->friends, new_friend->user_id);
+    write_client(client->sock, "ami ajouté !");
+    return;
+}
+
 void handle_message(Clients *connections, Client *client, char *buffer, Games *games)
 {
     // Nettoyage
@@ -596,6 +637,9 @@ void handle_message(Clients *connections, Client *client, char *buffer, Games *g
         break;
     case MSG_STOP_SPEC:
         msg_stop_spec(client, games);
+        break;
+    case MSG_FRIEND:
+        msg_friend(client, &message);
         break;
     case MSG_SETBIO:
     {

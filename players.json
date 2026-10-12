@@ -2,175 +2,114 @@
 		"user_id":	0,
 		"name":	"bob1",
 		"bio":	"",
-		"rank":	0
+		"rank":	0,
+		"friends":	[1]
 	}, {
 		"user_id":	1,
 		"name":	"bob2",
-		"bio":	"je suis pro",
-		"rank":	0
+		"bio":	"",
+		"rank":	0,
+		"friends":	[2]
 	}, {
 		"user_id":	2,
 		"name":	"bob3",
 		"bio":	"",
-		"rank":	0
+		"rank":	0,
+		"friends":	[]
 	}, {
 		"user_id":	3,
-		"name":	"South_1",
-		"bio":	"",
-		"rank":	0
-	}, {
-		"user_id":	4,
-		"name":	"North_1",
-		"bio":	"",
-		"rank":	0
-	}, {
-		"user_id":	5,
-		"name":	"South_2",
-		"bio":	"",
-		"rank":	0
-	}, {
-		"user_id":	6,
-		"name":	"North_2",
-		"bio":	"",
-		"rank":	0
-	}, {
-		"user_id":	7,
-		"name":	"South_3",
-		"bio":	"",
-		"rank":	0
-	}, {
-		"user_id":	8,
-		"name":	"North_3",
-		"bio":	"",
-		"rank":	0
-	}, {
-		"user_id":	9,
-		"name":	"South_4",
-		"bio":	"",
-		"rank":	0
-	}, {
-		"user_id":	10,
-		"name":	"North_4",
-		"bio":	"",
-		"rank":	0
-	}, {
-		"user_id":	11,
-		"name":	"South_5",
-		"bio":	"",
-		"rank":	0
-	}, {
-		"user_id":	12,
-		"name":	"North_5",
-		"bio":	"",
-		"rank":	0
-	}, {
-		"user_id":	13,
-		"name":	"South_6",
-		"bio":	"",
-		"rank":	0
-	}, {
-		"user_id":	14,
-		"name":	"North_6",
-		"bio":	"",
-		"rank":	0
-	}, {
-		"user_id":	15,
-		"name":	"South_7",
-		"bio":	"",
-		"rank":	0
-	}, {
-		"user_id":	16,
-		"name":	"North_7",
-		"bio":	"",
-		"rank":	0
-	}, {
-		"user_id":	17,
-		"name":	"South_8",
-		"bio":	"",
-		"rank":	0
-	}, {
-		"user_id":	18,
-		"name":	"North_8",
-		"bio":	"",
-		"rank":	0
-	}, {
-		"user_id":	19,
 		"name":	"P1_1",
 		"bio":	"",
-		"rank":	0
+		"rank":	0,
+		"friends":	[]
 	}, {
-		"user_id":	20,
+		"user_id":	4,
 		"name":	"P2_1",
 		"bio":	"",
-		"rank":	0
+		"rank":	0,
+		"friends":	[]
 	}, {
-		"user_id":	21,
+		"user_id":	5,
 		"name":	"P1_2",
 		"bio":	"",
-		"rank":	0
+		"rank":	0,
+		"friends":	[]
 	}, {
-		"user_id":	22,
+		"user_id":	6,
 		"name":	"P2_2",
 		"bio":	"",
-		"rank":	0
+		"rank":	0,
+		"friends":	[]
 	}, {
-		"user_id":	23,
+		"user_id":	7,
 		"name":	"P1_3",
 		"bio":	"",
-		"rank":	0
+		"rank":	0,
+		"friends":	[]
 	}, {
-		"user_id":	24,
+		"user_id":	8,
 		"name":	"P2_3",
 		"bio":	"",
-		"rank":	0
+		"rank":	0,
+		"friends":	[]
 	}, {
-		"user_id":	25,
+		"user_id":	9,
 		"name":	"P1_4",
 		"bio":	"",
-		"rank":	0
+		"rank":	0,
+		"friends":	[]
 	}, {
-		"user_id":	26,
+		"user_id":	10,
 		"name":	"P2_4",
 		"bio":	"",
-		"rank":	0
+		"rank":	0,
+		"friends":	[]
 	}, {
-		"user_id":	27,
+		"user_id":	11,
 		"name":	"P1_5",
 		"bio":	"",
-		"rank":	0
+		"rank":	0,
+		"friends":	[]
 	}, {
-		"user_id":	28,
+		"user_id":	12,
 		"name":	"P2_5",
 		"bio":	"",
-		"rank":	0
+		"rank":	0,
+		"friends":	[]
 	}, {
-		"user_id":	29,
+		"user_id":	13,
 		"name":	"P1_6",
 		"bio":	"",
-		"rank":	0
+		"rank":	0,
+		"friends":	[]
 	}, {
-		"user_id":	30,
+		"user_id":	14,
 		"name":	"P2_6",
 		"bio":	"",
-		"rank":	0
+		"rank":	0,
+		"friends":	[]
 	}, {
-		"user_id":	31,
+		"user_id":	15,
 		"name":	"P1_7",
 		"bio":	"",
-		"rank":	0
+		"rank":	0,
+		"friends":	[]
 	}, {
-		"user_id":	32,
+		"user_id":	16,
 		"name":	"P2_7",
 		"bio":	"",
-		"rank":	0
+		"rank":	0,
+		"friends":	[]
 	}, {
-		"user_id":	33,
+		"user_id":	17,
 		"name":	"P1_8",
 		"bio":	"",
-		"rank":	0
+		"rank":	0,
+		"friends":	[]
 	}, {
-		"user_id":	34,
+		"user_id":	18,
 		"name":	"P2_8",
 		"bio":	"",
-		"rank":	0
+		"rank":	0,
+		"friends":	[]
 	}]
