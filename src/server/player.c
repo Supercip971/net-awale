@@ -179,7 +179,3 @@ Player *find_player_by_name(char const *name)
     }
     return NULL;
 }
-
-void addFriend(Player player, char friend[MAX_USERNAME_LENGTH])
-{
-}
