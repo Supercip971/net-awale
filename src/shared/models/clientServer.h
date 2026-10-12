@@ -21,7 +21,9 @@ typedef enum
     MSG_FRIENDS,
     MSG_ADDFRIEND,
     MSG_HISTORY,
-    MSG_REPLAY_GAME
+    MSG_REPLAY_GAME,
+    MSG_STEP_REPLAY,
+    MSG_CONTINUE_REPLAY
 } MsgType;
 
 typedef struct
@@ -103,6 +105,14 @@ typedef struct
         {
             GameHistoryId id;
         } replayGame;
+
+        struct
+        {
+        } nextReplay;
+
+        struct
+        {
+        } continueReplay;
     };
 } ClientServerMessage;
 

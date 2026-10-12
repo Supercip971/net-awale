@@ -171,7 +171,7 @@ void app(void)
                 pid = create_player(&new_p);
             }
 
-            Client c = {.sock = csock, .player = pid};
+            Client c = {.sock = csock, .player = pid, .currentReplayStep = -1, .currentGameHistoryId = -1};
             vec_push(&clients, c);
         }
         else
@@ -204,7 +204,7 @@ void app(void)
                     }
                     else
                     {
-                        handle_message(&clients, &client, buffer, &games);
+                        handle_message(&clients, &clients.data[i], buffer, &games);
                     }
                     break;
                 }

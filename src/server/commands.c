@@ -638,12 +638,19 @@ void msg_history(Client *client)
     w_deinit(&wstr);
 }
 
-void msg_replay_game(Client *client, GameHistoryId gameHistoryId)
+// startIndex = 1 si pas commencé
+// continueToEnd = booléen
+void doReplay(Client *client, int continueToEnd)
 {
-    GameHistory *gameHistory = getGameHistoryById(gameHistoryId);
+    GameHistory *gameHistory = getGameHistoryById(client->currentGameHistoryId);
     if (gameHistory == NULL)
     {
         write_client(client->sock, "Cette partie n'existe pas frérot.\n");
+        return;
+    }
+    if (client->currentReplayStep >= gameHistory->turns.length)
+    {
+        write_client(client->sock, "Replay terminé frérot.\n");
         return;
     }
     Game game;
@@ -651,16 +658,25 @@ void msg_replay_game(Client *client, GameHistoryId gameHistoryId)
     game.players[0] = gameHistory->p1;
     game.players[1] = gameHistory->p2;
     game.started = (gameHistory->started == gameHistory->p2) ? 1 : 0;
-    game.currentPlayer = gameHistory->started;
-    for (int i = 0; i < gameHistory->turns.length; i++)
+    game.currentPlayer = game.started;
+
+    for (int i = 0; i < client->currentReplayStep; i++)
+    {
+        int captured = 0;
+        play(&game, game.currentPlayer, gameHistory->turns.data[i], &captured);
+        game.currentPlayer = game.currentPlayer ? 0 : 1;
+    }
+
+    for (int i = client->currentReplayStep; i < gameHistory->turns.length; i++)
     {
         int captured = 0;
         if (!play(&game, game.currentPlayer, gameHistory->turns.data[i], &captured))
         {
-            write_client(client->sock, "Replay corrompu c'est mort déso");
+            write_client(client->sock, "Replay corrompu c'est mort déso\n");
             break;
         }
         game.currentPlayer = game.currentPlayer ? 0 : 1;
+        client->currentReplayStep = i + 1;
         GameStatus result = gameStatus(&game, game.currentPlayer);
 
         char board[BUF_SIZE] = {0};
@@ -681,8 +697,22 @@ void msg_replay_game(Client *client, GameHistoryId gameHistoryId)
             write_client(client->sock, "\nT'as spectate pour r, ils ont fait égalité ces nuls\n");
             break;
         }
+        if (!continueToEnd)
+            break;
     }
     vec_deinit(&game.turns);
+}
+
+void msg_replay_game(Client *client, GameHistoryId gameHistoryId)
+{
+    if (getGameHistoryById(gameHistoryId) == NULL)
+    {
+        write_client(client->sock, "Cette partie n'existe pas frérot.\n");
+        return;
+    }
+    client->currentReplayStep = 0;
+    client->currentGameHistoryId = gameHistoryId;
+    doReplay(client, 0);
 }
 
 void handle_message(Clients *connections, Client *client, char *buffer, Games *games)
@@ -757,6 +787,12 @@ void handle_message(Clients *connections, Client *client, char *buffer, Games *g
         break;
     case MSG_REPLAY_GAME:
         msg_replay_game(client, message.replayGame.id);
+        break;
+    case MSG_STEP_REPLAY:
+        doReplay(client, 0);
+        break;
+    case MSG_CONTINUE_REPLAY:
+        doReplay(client, 1);
         break;
     default:
         break;

@@ -123,6 +123,14 @@ int parse_message(const char *buffer, ClientServerMessage *msg)
         msg->kind = MSG_REPLAY_GAME;
         msg->replayGame.id = atoi(arg);
     }
+    else if (strcmp(command, "s") == 0)
+    {
+        msg->kind = MSG_STEP_REPLAY;
+    }
+    else if (strcmp(command, "c") == 0)
+    {
+        msg->kind = MSG_CONTINUE_REPLAY;
+    }
     else
     {
         fprintf(stderr, "Unknown command: %s\n", command);
