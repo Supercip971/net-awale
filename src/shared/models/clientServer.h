@@ -1,4 +1,6 @@
 #pragma once
+#include "server/common.h"
+#include "server/history.h"
 #include "shared/models/const.h"
 
 typedef enum
@@ -15,7 +17,11 @@ typedef enum
     MSG_SPEC,
     MSG_STOP_SPEC,
     MSG_SETBIO,
-    MSG_SET_PRIVATE
+    MSG_SET_PRIVATE,
+    MSG_FRIENDS,
+    MSG_ADDFRIEND,
+    MSG_SEE_HISTORY,
+    MSG_REPLAY_HISTORY
 } MsgType;
 
 typedef struct
@@ -26,47 +32,78 @@ typedef struct
         struct
         {
         } players;
+
         struct
         {
         } games;
+
         struct
         {
             int hole;
         } play;
+
         struct
         {
             char pseudo[MAX_USERNAME_LENGTH];
         } defy;
+
         struct
         {
             char pseudo[MAX_USERNAME_LENGTH];
         } acceptDefy;
+
         struct
         {
             char pseudo[MAX_USERNAME_LENGTH];
         } declineDefy;
+
         struct
         {
             char message[BUF_SIZE - 9];
         } message;
+
         struct
         {
             char pseudo[MAX_USERNAME_LENGTH];
         } spec;
+
         struct
         {
         } stopSpec;
+
         struct
         {
             char bio[BUF_SIZE - 7];
         } setbio;
+
         struct
         {
             char pseudo[MAX_USERNAME_LENGTH];
         } info;
+
         struct
         {
             int private;
         } setPrivate;
+
+        struct
+        {
+            char pseudo[MAX_USERNAME_LENGTH];
+        } addFriend;
+
+        struct
+        {
+        } friend;
+
+        struct
+        {
+        } lastGamePlayed;
+
+        struct
+        {
+            GameHistoryId id;
+        } replayGame;
     };
 } ClientServerMessage;
+
+#define CALL_SERVER_LEN sizeof(ClientServerMessage)
