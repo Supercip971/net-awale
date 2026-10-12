@@ -386,8 +386,7 @@ int get_players_clients(Clients *connections, Game *game, Client **opponent1, Cl
 void msg_spec(Clients *connections, Client *client, Games *games, ClientServerMessage *message)
 {
     Client *adversaire1 = checkOpponent(message->spec.pseudo, connections, client);
-    Client *adversaire2 = checkOpponent(message->spec.pseudo, connections, adversaire1);
-    if (!adversaire1 || !adversaire2)
+    if (!adversaire1)
         return;
 
     if (is_player_in_game(games, client->player))
@@ -423,21 +422,22 @@ void msg_spec(Clients *connections, Client *client, Games *games, ClientServerMe
         return;
     }
 
-    if (!get_players_clients(connections, game, &adversaire1, &adversaire2))
+    Client *p0 = NULL;
+    Client *p1 = NULL;
+    if (!get_players_clients(connections, game, &p0, &p1))
     {
         write_client(client->sock, "Les joueurs existent pas frr (ils ont dû se déco entre temps, réessaie)\n");
         return;
     }
 
-    game->spectators[game->spectatorsCount] = client->player;
-    ++game->spectatorsCount;
+    game->spectators[game->spectatorsCount++] = client->player;
 
     Player *client_p = find_player_by_id(client->player);
     const char *name = client_p ? client_p->name : "Un inconnu";
     char messageSpec[BUF_SIZE] = {0};
     snprintf(messageSpec, sizeof messageSpec, "%s se cache dans les buissons pour vous observer...\n", name);
-    write_client(adversaire1->sock, messageSpec);
-    write_client(adversaire2->sock, messageSpec);
+    write_client(p0->sock, messageSpec);
+    write_client(p1->sock, messageSpec);
     write_client(client->sock, "T'es maintenant en mode spectateur, enjoy le spectacle frérot\n");
 }
 
