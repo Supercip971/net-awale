@@ -422,6 +422,7 @@ void msg_spec(Clients *connections, Client *client, Games *games, ClientServerMe
     write_spectator_notify(p1->sock, client_p ? client_p->name : "Un inconnu");
 
     write_client_status(client->sock, "T'es maintenant en mode spectateur, enjoy le spectacle frérot\n");
+    write_gameboard(client->sock, game);
 }
 
 void msg_stop_spec(Client *client, Games *games)
