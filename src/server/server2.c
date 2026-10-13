@@ -7,11 +7,12 @@
 #include <time.h>
 #include "server/client2.h"
 #include "server/commands.h"
+#include "server/game.h"
 #include "server/history.h"
 #include "server/message.h"
-#include "server/game.h"
 #include "server/player.h"
 #include "server/server2.h"
+#include "shared/common.h"
 #include "shared/game.h"
 #include "shared/models/clientServer.h"
 #include "shared/vec.h"

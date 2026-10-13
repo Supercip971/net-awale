@@ -1,6 +1,6 @@
 #pragma once
 
-#include "server/common.h"
+#include "shared/common.h"
 #include "server/history.h"
 #include "server/player.h"
 

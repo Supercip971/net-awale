@@ -1,10 +1,10 @@
 #pragma once
 
 #include <stdint.h>
+#include "shared/common.h"
 #include "shared/models/const.h"
 #include "shared/vec.h"
 
-typedef uint64_t PlayerId;
 #define INVALID_PLAYER_ID ((PlayerId)(-1))
 
 typedef vec_t(PlayerId) Friends;

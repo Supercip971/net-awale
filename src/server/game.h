@@ -2,7 +2,7 @@
 
 #include <stdio.h>
 #include "server/client2.h"
-#include "server/common.h"
+#include "shared/common.h"
 #include "shared/game.h"
 #include "shared/writer.h"
 

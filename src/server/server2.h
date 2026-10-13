@@ -1,7 +1,7 @@
 #pragma once
 
 #include "server/client2.h"
-#include "server/common.h"
+#include "shared/common.h"
 
 void init(void);
 void end(void);

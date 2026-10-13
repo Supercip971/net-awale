@@ -1,6 +1,7 @@
 #include "history.h"
 #include <stdio.h>
 #include "server/game.h"
+#include "shared/common.h"
 #include "shared/json/cJSON.h"
 
 static GameHistories histories = {};

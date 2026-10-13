@@ -1,6 +1,7 @@
 #pragma once
 
 #include "server/player.h"
+#include "shared/common.h"
 #include "shared/game.h"
 #include "shared/vec.h"
 
@@ -8,7 +9,6 @@
 
 // player play
 
-typedef uint64_t GameHistoryId;
 typedef struct GameHistory
 {
     GameHistoryId id;

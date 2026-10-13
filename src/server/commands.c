@@ -8,6 +8,7 @@
 #include "server/message.h"
 #include "server/player.h"
 #include "server/server2.h"
+#include "shared/common.h"
 #include "shared/helper.h"
 #include "shared/models/clientServer.h"
 #include "shared/vec.h"
@@ -171,12 +172,12 @@ void msg_accept_defy(Clients *connections, Client *client, Games *games, ClientS
     }
 
     // Check if defier or opponent is replaying a game
-    if (client->currentGameHistoryId != -1)
+    if (client->currentGameHistoryId != (uint64_t)-1)
     {
         write_client_error(client->sock, "T'es en train de replay une game frérot, chillax\n");
         return;
     }
-    if (adversaire->currentGameHistoryId != -1)
+    if (adversaire->currentGameHistoryId != (uint64_t)-1)
     {
         write_client_error(client->sock, "Il est en train de replay une game frérot, chillax\n");
         return;
@@ -221,7 +222,7 @@ void msg_defy(Clients *connections, Client *client, Games *games, ClientServerMe
     if (!adversaire)
         return;
 
-    if (client->currentGameHistoryId != -1)
+    if (client->currentGameHistoryId != (uint64_t)-1)
     {
         write_client_error(client->sock, "T'es en train de replay une game frérot, chillax\n");
         return;
@@ -921,7 +922,7 @@ void handle_message(Clients *connections, Client *client, ClientServerMessage *m
         break;
     }
     case MSG_GIVE_UP:
-        msg_giveup(connections, client,  games);
+        msg_giveup(connections, client, games);
         break;
     default:
         break;

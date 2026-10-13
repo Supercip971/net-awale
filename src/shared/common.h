@@ -21,6 +21,9 @@ typedef struct sockaddr_in SOCKADDR_IN;
 typedef struct sockaddr SOCKADDR;
 typedef struct in_addr IN_ADDR;
 
+typedef uint64_t GameHistoryId;
+typedef uint64_t PlayerId;
+
 #else
 
 #    error not defined for this platform

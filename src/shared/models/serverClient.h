@@ -1,5 +1,5 @@
 #pragma once
-#include "server/common.h"
+#include "shared/common.h"
 #include "shared/game.h"
 #include "shared/models/const.h"
 #include "shared/models/shared.h"

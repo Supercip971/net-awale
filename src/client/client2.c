@@ -6,7 +6,7 @@
 #include "client/help.h"
 #include "client/parser.h"
 #include "client/ui.h"
-#include "server/common.h"
+#include "shared/common.h"
 #include "shared/models/clientServer.h"
 #include "shared/models/serverClient.h"
 

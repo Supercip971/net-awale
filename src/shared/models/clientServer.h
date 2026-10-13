@@ -1,6 +1,5 @@
 #pragma once
-#include "server/common.h"
-#include "server/history.h"
+#include "shared/common.h"
 #include "shared/models/const.h"
 
 typedef enum
