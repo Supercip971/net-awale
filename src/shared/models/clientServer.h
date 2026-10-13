@@ -26,6 +26,7 @@ typedef enum
     MSG_HISTORY,
     MSG_REPLAY_GAME,
     MSG_STEP_REPLAY,
+    MSG_GIVE_UP,
     MSG_CONTINUE_REPLAY
 } MsgType;
 

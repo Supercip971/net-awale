@@ -17,6 +17,7 @@ void showHelp()
 
     printf("\n = During a game:\n");
     printf("  play <hole>              - joue une case ou un trou (0 a 5)\n");
+    printf("  giveup                   - abandonne la partie en cours\n");
 
     printf("\n = Spectating:\n");
     printf("  spec <player>            - observe la partie d'un joueur\n");

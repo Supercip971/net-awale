@@ -25,6 +25,7 @@ typedef struct Game
     GAME_STATUS status;
     Turns turns;
     int private;
+    int giving_up[2];
 } Game;
 
 typedef vec_t(Game) Games;
