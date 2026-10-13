@@ -170,6 +170,18 @@ void msg_accept_defy(Clients *connections, Client *client, Games *games, ClientS
         }
     }
 
+    // Check if defier or opponent is replaying a game
+    if (client->currentGameHistoryId != -1)
+    {
+        write_client_error(client->sock, "T'es en train de replay une game frérot, chillax\n");
+        return;
+    }
+    if (adversaire->currentGameHistoryId != -1)
+    {
+        write_client_error(client->sock, "Il est en train de replay une game frérot, chillax\n");
+        return;
+    }
+
     Game *spectatedGame = is_player_spectating_a_game(games, client->player);
 
     if (spectatedGame != NULL)
@@ -208,6 +220,12 @@ void msg_defy(Clients *connections, Client *client, Games *games, ClientServerMe
     Client *adversaire = checkOpponent(message->defy.pseudo, connections, client);
     if (!adversaire)
         return;
+
+    if (client->currentGameHistoryId != -1)
+    {
+        write_client_error(client->sock, "T'es en train de replay une game frérot, chillax\n");
+        return;
+    }
 
     // Check if defier is already in game
     for (int i = 0; i < games->length; ++i)
@@ -672,6 +690,12 @@ void doReplay(Client *client, int continueToEnd)
         GameStatus result = gameStatus(&game, game.currentPlayer);
 
         write_gameboard(client->sock, &game);
+        if (result != GAME_ONGOING)
+        {
+            client->currentGameHistoryId = -1;
+            client->currentReplayStep = -1;
+            write_client_status(client->sock, "\nReplay terminé frérot.\n");
+        }
         if (result == GAME_WIN_P0 || result == GAME_WIN_P1)
         {
             int winnerIndex = (result == GAME_WIN_P1) ? 1 : 0;
@@ -681,7 +705,6 @@ void doReplay(Client *client, int continueToEnd)
         }
         else if (result == GAME_DRAW)
         {
-
             write_client_status(client->sock, "\nT'as spectate pour r, ils ont fait égalité ces nuls\n");
             break;
         }
@@ -691,8 +714,14 @@ void doReplay(Client *client, int continueToEnd)
     vec_deinit(&game.turns);
 }
 
-void msg_replay_game(Client *client, GameHistoryId gameHistoryId)
+void msg_replay_game(Client *client, GameHistoryId gameHistoryId, Games *games)
 {
+    if (is_player_in_game(games, client->player))
+    {
+        write_client_error(client->sock, "T'es déjà en game frérot, chillax\n");
+        return;
+    }
+
     if (getGameHistoryById(gameHistoryId) == NULL)
     {
         write_client_error(client->sock, "Cette partie n'existe pas frérot.\n");
@@ -771,14 +800,28 @@ void handle_message(Clients *connections, Client *client, ClientServerMessage *m
         msg_history(client);
         break;
     case MSG_REPLAY_GAME:
-        msg_replay_game(client, message->replayGame.id);
+        msg_replay_game(client, message->replayGame.id, games);
         break;
     case MSG_STEP_REPLAY:
+    {
+        if (is_player_in_game(games, client->player))
+        {
+            write_client_error(client->sock, "T'es déjà en game frérot, chillax\n");
+            return;
+        }
         doReplay(client, 0);
         break;
+    }
     case MSG_CONTINUE_REPLAY:
+    {
+        if (is_player_in_game(games, client->player))
+        {
+            write_client_error(client->sock, "T'es déjà en game frérot, chillax\n");
+            return;
+        }
         doReplay(client, 1);
         break;
+    }
     default:
         break;
     }
