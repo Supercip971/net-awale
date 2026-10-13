@@ -4,24 +4,59 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/socket.h>
+#include <time.h>
 #include "server/client2.h"
 #include "server/commands.h"
 #include "server/history.h"
 #include "server/message.h"
+#include "server/game.h"
 #include "server/player.h"
 #include "server/server2.h"
 #include "shared/game.h"
 #include "shared/models/clientServer.h"
 #include "shared/vec.h"
 
-void removeGamesOf(Games *games, PlayerId player)
+void removeGamesOf(Games *games, Clients *clients, PlayerId player)
 {
     for (int i = games->length - 1; i >= 0; --i)
     {
-        if (games->data[i].players[0] == player ||
-            games->data[i].players[1] == player)
+        Game *g = &games->data[i];
+        int disconnecting_player = -1;
+        if (g->players[0] == player)
         {
+            disconnecting_player = 0;
+        }
+        else if (g->players[1] == player)
+        {
+            disconnecting_player = 1;
+        }
+        else
+        {
+            continue;
+        }
+
+        if (g->status == WAITING)
+        {
+            PlayerId other_player = (disconnecting_player == 0) ? g->players[1] : g->players[0];
+            if (clients != NULL)
+            {
+                for (int j = 0; j < clients->length; ++j)
+                {
+                    if (clients->data[j].player == other_player)
+                    {
+                        write_client_error(clients->data[j].sock, "Votre adversaire s'est déconnecté, le défi a été annulé.\n");
+                        break;
+                    }
+                }
+            }
+            vec_deinit(&g->turns);
             vec_splice(games, i, 1);
+        }
+        else if (g->status == IN_GAME)
+        {
+            // Soft giving up: preserve the game so the player can reconnect,
+            // or the adversary can type 'giveup' to claim victory.
+            g->giving_up[disconnecting_player] = 1;
         }
     }
     for (int i = 0; i < games->length; ++i)
@@ -63,6 +98,8 @@ void init(void)
         exit(EXIT_FAILURE);
     }
 #endif
+
+    srand((unsigned int)time(NULL));
 }
 
 void end(void)
@@ -178,6 +215,26 @@ void app(void)
 
             Client c = {.sock = csock, .player = pid, .currentReplayStep = -1, .currentGameHistoryId = -1};
             vec_push(&clients, c);
+
+            Game *runningGame = find_game(&games, pid);
+            if (runningGame != NULL)
+            {
+                int p = (runningGame->players[1] == pid) ? 1 : 0;
+                runningGame->giving_up[p] = 0;
+                write_client_status(csock, "Tu as rejoint ta partie en cours !\n");
+                write_gameboard(csock, runningGame);
+
+                PlayerId opponentId = runningGame->players[1 - p];
+                for (int j = 0; j < clients.length; ++j)
+                {
+                    if (clients.data[j].player == opponentId)
+                    {
+                        write_client_status(clients.data[j].sock, "Votre adversaire s'est reconnecté !\n");
+                        write_gameboard(clients.data[j].sock, runningGame);
+                        break;
+                    }
+                }
+            }
         }
         else
         {
@@ -205,7 +262,8 @@ void app(void)
                         strncpy(buffer, name, BUF_SIZE - 1);
                         buffer[BUF_SIZE - 1] = 0;
                         strncat(buffer, " disconnected !", BUF_SIZE - strlen(buffer) - 1);
-                        removeGamesOf(&games, client.player);
+                        signal_disconnect(&clients, &client, &games);
+                        removeGamesOf(&games, &clients, client.player);
                         send_message_to_all_clients(&clients, client, buffer, 1);
                     }
                     else

@@ -672,6 +672,8 @@ void doReplay(Client *client, int continueToEnd)
 
     for (int i = 0; i < client->currentReplayStep; i++)
     {
+        if (gameHistory->turns.data[i] == -1)
+            break;
         int captured = 0;
         play(&game, game.currentPlayer, gameHistory->turns.data[i], &captured);
         game.currentPlayer = game.currentPlayer ? 0 : 1;
@@ -679,6 +681,13 @@ void doReplay(Client *client, int continueToEnd)
 
     for (int i = client->currentReplayStep; i < gameHistory->turns.length; i++)
     {
+        if (gameHistory->turns.data[i] == -1)
+        {
+            client->currentReplayStep = i + 1;
+            Player *winner_p = find_player_by_id(gameHistory->winner);
+            write_winner_notify(client->sock, winner_p ? winner_p->name : "Unknown", false);
+            break;
+        }
         int captured = 0;
         if (!play(&game, game.currentPlayer, gameHistory->turns.data[i], &captured))
         {
@@ -732,6 +741,95 @@ void msg_replay_game(Client *client, GameHistoryId gameHistoryId, Games *games)
     doReplay(client, 0);
 }
 
+void msg_giveup(Clients *connections, Client *client, Games *games)
+{
+    Client *adversaire = NULL;
+    Game *game = NULL;
+
+    findOpponentNameAndGame(&adversaire, connections, games, client, &game);
+    if (game == NULL)
+    {
+        game = find_game(games, client->player);
+    }
+
+    if (game == NULL)
+    {
+        write_client_error(client->sock, "T'es tout seul frérot, va défier quelqu'un.\n");
+        return;
+    }
+
+    int currentPlayerIndex = (game->players[1] == client->player) ? 1 : 0;
+    int adversaryPlayerIndex = 1 - currentPlayerIndex;
+
+    int winnerIndex;
+    if (game->giving_up[adversaryPlayerIndex])
+    {
+        // Adversary has already soft-given up (e.g. disconnected), client claims automatic victory
+        write_client_status(client->sock, "Ton adversaire a déjà abandonné, tu as donc gagné.\n");
+        winnerIndex = currentPlayerIndex;
+    }
+    else
+    {
+        // Normal surrender: client gives up, opponent wins
+        winnerIndex = adversaryPlayerIndex;
+        write_client_status(client->sock, "\nT'as perdu frérot, laonte.\n");
+    }
+
+    // update game status with forfeit indicator
+    vec_push(&game->turns, -1);
+    gameHistoryGameEnded(game, winnerIndex);
+
+    Client *winnerClient = (winnerIndex == currentPlayerIndex) ? client : adversaire;
+    Client *loserClient = (winnerIndex == currentPlayerIndex) ? adversaire : client;
+
+    if (winnerClient != NULL && winnerClient != client)
+    {
+        write_client_status(winnerClient->sock, "\nT'as gagné frérot, gg.\n");
+    }
+    if (loserClient != NULL && loserClient != client)
+    {
+        write_client_status(loserClient->sock, "\nT'as perdu frérot, laonte.\n");
+    }
+
+    Player *winner_p = find_player_by_id(game->players[winnerIndex]);
+    for (int i = 0; i < game->spectatorsCount; ++i)
+    {
+        for (int j = 0; j < connections->length; ++j)
+        {
+            Client *spectator = &connections->data[j];
+            if (spectator->player == game->spectators[i])
+            {
+                write_winner_notify(spectator->sock, winner_p ? winner_p->name : "Unknown", false);
+                break;
+            }
+        }
+    }
+
+    for (int i = 0; i < games->length; ++i)
+    {
+        if (&(games->data[i]) == game)
+        {
+            vec_splice(games, i, 1);
+            break;
+        }
+    }
+}
+
+void signal_disconnect(Clients *listeClients, Client *client, Games *games)
+{
+    Client *adversaire = NULL;
+    Game *game = NULL;
+    if (findOpponentNameAndGame(&adversaire, listeClients, games, client, &game))
+    {
+        if (game != NULL && game->status == IN_GAME)
+        {
+            int disconnectingPlayerIndex = (game->players[1] == client->player) ? 1 : 0;
+            game->giving_up[disconnectingPlayerIndex] = 1;
+
+            write_client_status(adversaire->sock, "\nVotre adversaire s'est déconnecté (abandon en attente). Tu peux faire 'giveup' pour gagner automatiquement ou attendre qu'il se reconnecte.\n");
+        }
+    }
+}
 void handle_message(Clients *connections, Client *client, ClientServerMessage *message, Games *games)
 {
     if (message->protocol_magic != PROTOCOL_MAGIC)
@@ -822,6 +920,9 @@ void handle_message(Clients *connections, Client *client, ClientServerMessage *m
         doReplay(client, 1);
         break;
     }
+    case MSG_GIVE_UP:
+        msg_giveup(connections, client,  games);
+        break;
     default:
         break;
     }

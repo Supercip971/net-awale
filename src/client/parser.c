@@ -135,6 +135,10 @@ ClientServerMessage *encode_message(const char *buffer)
     {
         msg->kind = MSG_CONTINUE_REPLAY;
     }
+    else if (strcmp(command, "giveup") == 0)
+    {
+        msg->kind = MSG_GIVE_UP;
+    }
     else
     {
         return NULL;
