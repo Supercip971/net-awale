@@ -68,6 +68,14 @@ ClientServerMessage *encode_message(const char *buffer)
         msg->kind = MSG_ACCEPT_DEFY;
         strccpy(msg->acceptDefy.pseudo, arg, sizeof(msg->acceptDefy.pseudo));
     }
+    else if (strcmp(command, "cancel") == 0)
+    {
+        if (arg[0] == 0)
+            return NULL;
+
+        msg->kind = MSG_CANCEL_DEFY;
+        strccpy(msg->cancelDefy.pseudo, arg, sizeof(msg->cancelDefy.pseudo));
+    }
     else if (strcmp(command, "spec") == 0)
     {
         if (arg[0] == 0)

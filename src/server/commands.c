@@ -276,6 +276,41 @@ void msg_decline_defy(Clients *connections, Client *client, Games *games, Client
     write_client_error(adversaire->sock, buffer);
 }
 
+void msg_cancel_defy(Clients *connections, Client *client, Games *games, ClientServerMessage *message)
+{
+    Client *adversaire = checkOpponent(message->declineDefy.pseudo, connections, client);
+    if (!adversaire)
+        return;
+
+    // Vu qu'on a qu'une seule game par joueur, on peut supprimer que le premier qu'on trouve
+    int found = 0;
+    for (int i = 0; i < games->length; ++i)
+    {
+        Game *game = &games->data[i];
+
+        if (game->status != WAITING)
+            continue;
+        if (game->players[0] == client->player &&
+            game->players[1] == adversaire->player)
+        {
+            vec_splice(games, i, 1);
+            found = 1;
+            break;
+        }
+    }
+    if (!found)
+    {
+        write_client_error(client->sock, "Tu annules quoi là frr ? t'as défié personne retourne dodo.\n");
+        return;
+    }
+
+    Player *adversaire_p = find_player_by_id(adversaire->player);
+
+    char buffer[256];
+    snprintf(buffer, sizeof(buffer), "déso, %s a trop peur, il a annulé\n", adversaire_p ? adversaire_p->name : "Unknown");
+    write_client_error(adversaire->sock, buffer);
+}
+
 int get_players_clients(Clients *connections, Game *game, Client **opponent1, Client **opponent2)
 {
     for (int i = 0; i < connections->length; ++i)
@@ -693,6 +728,9 @@ void handle_message(Clients *connections, Client *client, ClientServerMessage *m
         break;
     case MSG_DECLINE_DEFY:
         msg_decline_defy(connections, client, games, message);
+        break;
+    case MSG_CANCEL_DEFY:
+        msg_cancel_defy(connections, client, games, message);
         break;
     case MSG_ACCEPT_DEFY:
         msg_accept_defy(connections, client, games, message);

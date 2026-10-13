@@ -23,7 +23,7 @@ void gameInit(Game *game)
 static int sideSum(const Game *g, int side)
 {
     int s = 0;
-    for (int i = 0; i < 6; i++)\
+    for (int i = 0; i < 6; i++)
         s += g->board[i + side * 6];
     return s;
 }

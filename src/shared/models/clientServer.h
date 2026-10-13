@@ -15,6 +15,7 @@ typedef enum
     MSG_DEFY,
     MSG_ACCEPT_DEFY,
     MSG_DECLINE_DEFY,
+    MSG_CANCEL_DEFY,
     MSG_MESSAGE,
     MSG_SPEC,
     MSG_STOP_SPEC,
@@ -66,6 +67,11 @@ typedef struct
         {
             char pseudo[MAX_USERNAME_LENGTH];
         } declineDefy;
+
+        struct
+        {
+            char pseudo[MAX_USERNAME_LENGTH];
+        } cancelDefy;
 
         struct
         {

@@ -136,7 +136,7 @@ void display_message(SOCKET *initiator, Server2ClientMessage *msg)
     case MSG_RET_STATUS:
     {
         if (msg->status.is_error)
-            printf("server side error: %s", msg->status.msg);
+            printf("Error: %s", msg->status.msg);
         else
             printf("%s", msg->status.msg);
 
