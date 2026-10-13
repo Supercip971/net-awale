@@ -441,7 +441,6 @@ void msg_play(Clients *connections, Client *client, Games *games, ClientServerMe
         // update game status
         vec_push(&game->turns, message->play.hole);
 
-        GameStatus result = gameStatus(game, game->currentPlayer);
         Client *p0 = (currentPlayerIndex == 0) ? client : adversaire;
         Client *p1 = (currentPlayerIndex == 1) ? client : adversaire;
         // FIXME: move those loops outside of the if because they are shared
