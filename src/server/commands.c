@@ -148,6 +148,28 @@ void msg_accept_defy(Clients *connections, Client *client, Games *games, ClientS
         }
     }
 
+    // Check if defier or opponent is already spectating a game
+    for (int i = 0; i < games->length; ++i)
+    {
+        Game *game = &games->data[i];
+        if (game->status == IN_GAME)
+        {
+            for (int j = 0; j < game->spectatorsCount; ++j)
+            {
+                if (game->spectators[j] == client->player)
+                {
+                    write_client_error(client->sock, "T'es déjà en train de mater une autre game frérot chillax\n");
+                    return;
+                }
+                if (game->spectators[j] == adversaire->player)
+                {
+                    write_client_error(client->sock, "Il est déjà en train de mater une autre game frérot chillax\n");
+                    return;
+                }
+            }
+        }
+    }
+
     Game *spectatedGame = is_player_spectating_a_game(games, client->player);
 
     if (spectatedGame != NULL)
