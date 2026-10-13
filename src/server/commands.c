@@ -500,53 +500,26 @@ void msg_play(Clients *connections, Client *client, Games *games, ClientServerMe
 
         Client *p0 = (currentPlayerIndex == 0) ? client : adversaire;
         Client *p1 = (currentPlayerIndex == 1) ? client : adversaire;
-        // FIXME: move those loops outside of the if because they are shared
+        PlayerId winner = INVALID_PLAYER_ID;
         if (result == GAME_WIN_P0)
         {
             gameHistoryGameEnded(game, 0);
-
-            write_client_status(p0->sock, "\nT'as gagné frérot, gg.\n");
-            write_client_status(p1->sock, "\nT'as perdu frérot, laonte.\n");
-            Player *winner_p = find_player_by_id(p0->player);
-            for (int i = 0; i < game->spectatorsCount; ++i)
-            {
-                for (int j = 0; j < connections->length; ++j)
-                {
-                    Client *spectator = &connections->data[j];
-                    if (spectator->player == game->spectators[i])
-                    {
-                        write_winner_notify(spectator->sock, winner_p ? winner_p->name : "Unknown", false);
-                        break;
-                    }
-                }
-            }
+            winner = p0->player;
         }
         else if (result == GAME_WIN_P1)
         {
             gameHistoryGameEnded(game, 1);
-
-            write_client_status(p1->sock, "\nT'as gagné frérot, gg.\n");
-            write_client_status(p0->sock, "\nT'as perdu frérot, laonte.\n");
-            Player *winner_p = find_player_by_id(p1->player);
-            for (int i = 0; i < game->spectatorsCount; ++i)
-            {
-                for (int j = 0; j < connections->length; ++j)
-                {
-                    Client *spectator = &connections->data[j];
-                    if (spectator->player == game->spectators[i])
-                    {
-                        write_winner_notify(spectator->sock, winner_p ? winner_p->name : "Unknown", false);
-                        break;
-                    }
-                }
-            }
+            winner = p1->player;
         }
         else if (result == GAME_DRAW)
         {
             gameHistoryGameEnded(game, -1);
-
-            write_client_status(p0->sock, "\nEgalité frérot, nul.\n");
-            write_client_status(p1->sock, "\nEgalité frérot, nul.\n");
+        }
+        if (result != GAME_ONGOING)
+        {
+            Player *winner_p = find_player_by_id(winner);
+            write_winner_notify(p0->sock, winner_p ? winner_p->name : "null", false);
+            write_winner_notify(p1->sock, winner_p ? winner_p->name : "null", false);
             for (int i = 0; i < game->spectatorsCount; ++i)
             {
                 for (int j = 0; j < connections->length; ++j)
@@ -554,14 +527,11 @@ void msg_play(Clients *connections, Client *client, Games *games, ClientServerMe
                     Client *spectator = &connections->data[j];
                     if (spectator->player == game->spectators[i])
                     {
-                        write_winner_notify(spectator->sock, "null", true);
+                        write_winner_notify(spectator->sock, winner_p ? winner_p->name : "Unknown", result == GAME_DRAW);
                         break;
                     }
                 }
             }
-        }
-        if (result != GAME_ONGOING)
-        {
             for (int i = 0; i < games->length; ++i)
             {
                 if (&(games->data[i]) == game)
