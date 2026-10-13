@@ -1,10 +1,23 @@
 
 #include "parser.h"
+#include <errno.h>
+#include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include "shared/helper.h"
 #include "shared/models/clientServer.h"
+
+static int parse_int(const char *s, long min, long max, long *out)
+{
+    char *end;
+    errno = 0;
+    long v = strtol(s, &end, 10);
+    if (end == s || *end != '\0' || errno == ERANGE || v < min || v > max)
+        return 0;
+    *out = v;
+    return 1;
+}
 
 ClientServerMessage *encode_message(const char *buffer)
 {
@@ -33,8 +46,15 @@ ClientServerMessage *encode_message(const char *buffer)
     }
     else if (strcmp(command, "play") == 0)
     {
+        long n;
+        if (!parse_int(arg, 0, 5, &n))
+        {
+            printf("usage: play <0-5>\n");
+            free(msg);
+            return NULL;
+        }
         msg->kind = MSG_PLAY;
-        msg->play.hole = atoi(arg);
+        msg->play.hole = (int)n;
     }
     else if (strcmp(command, "message") == 0)
     {
@@ -103,8 +123,15 @@ ClientServerMessage *encode_message(const char *buffer)
     }
     else if (strcmp(command, "setprivate") == 0)
     {
+        long n;
+        if (!parse_int(arg, 0, 1, &n))
+        {
+            printf("usage: setprivate <0|1>\n");
+            free(msg);
+            return NULL;
+        }
         msg->kind = MSG_SET_PRIVATE;
-        msg->setPrivate.private = atoi(arg);
+        msg->setPrivate.private = (int)n;
     }
     else if (strcmp(command, "friends") == 0)
     {
@@ -124,8 +151,15 @@ ClientServerMessage *encode_message(const char *buffer)
     }
     else if (strcmp(command, "replaygame") == 0)
     {
+        long n;
+        if (!parse_int(arg, 1, LONG_MAX, &n))
+        {
+            printf("usage: replaygame <id>\n");
+            free(msg);
+            return NULL;
+        }
         msg->kind = MSG_REPLAY_GAME;
-        msg->replayGame.id = atoi(arg);
+        msg->replayGame.id = (int)n;
     }
     else if (strcmp(command, "s") == 0)
     {
