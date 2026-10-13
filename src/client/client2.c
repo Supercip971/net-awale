@@ -36,7 +36,8 @@ void onUserInput(SOCKET sock, const char *buffer)
     ClientServerMessage *msg = encode_message(buffer);
     if (msg == NULL)
     {
-        printf("invalid command, use `help` to show available commands\n");
+        printf("invalid command, use `help` to show available commands\n$ ");
+        fflush(stdout);
         return;
     }
     else if (msg->kind == MSG_CLIENTSIDE_HELP)
