@@ -150,9 +150,9 @@ void app(void)
 
             // On enlève les \r et \n des pseudos
             buffer[strcspn(buffer, "\r\n")] = 0;
-            if (buffer[0] == 0 || strlen(buffer) >= MAX_USERNAME_LENGTH || check_name_exist(&clients, buffer))
+            if (buffer[0] == 0 || strlen(buffer) >= MAX_USERNAME_LENGTH || strchr(buffer, ' ') != NULL || check_name_exist(&clients, buffer))
             {
-                write_client_error(csock, "Le pseudo existe déjà. Sois original stp\n");
+                write_client_error(csock, "Le pseudo existe déjà. Sois original stp (ou il est invalide et là skill issue, pas d'espace, 32 caractères max)\n");
                 closesocket(csock);
                 continue;
             }

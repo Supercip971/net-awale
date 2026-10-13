@@ -16,7 +16,7 @@ ClientServerMessage *encode_message(const char *buffer)
     *msg = (ClientServerMessage){0};
     msg->protocol_magic = PROTOCOL_MAGIC;
 
-    if (sscanf(buffer, "%31s %s", command, arg) < 1)
+    if (sscanf(buffer, "%31s %991s", command, arg) < 1)
         return NULL;
 
     if (strcmp(command, "help") == 0)

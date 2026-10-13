@@ -105,19 +105,23 @@ void app(const char *address, const char *name)
         /* something from standard input : i.e keyboard */
         if (FD_ISSET(STDIN_FILENO, &rdfs))
         {
-            fgets(buffer, buffer_size - 1, stdin);
+            if (fgets(buffer, buffer_size - 1, stdin) == NULL)
             {
-                char *p = NULL;
-                p = strstr(buffer, "\n");
-                if (p != NULL)
-                {
-                    *p = 0;
-                }
-                else
-                {
-                    /* fclean */
-                    buffer[buffer_size - 1] = 0;
-                }
+                if (feof(stdin))
+                    break;
+                perror("fgets()");
+                break;
+            }
+            char *p = NULL;
+            p = strstr(buffer, "\n");
+            if (p != NULL)
+            {
+                *p = 0;
+            }
+            else
+            {
+                /* fclean */
+                buffer[buffer_size - 1] = 0;
             }
             onUserInput(sock, buffer);
             fflush(stdout); // sur ma machine le $ n'est pas affiché à cause de \n
