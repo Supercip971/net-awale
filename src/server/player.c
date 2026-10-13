@@ -8,7 +8,6 @@
 Players memory_db = {};
 
 PlayerId last_used_id = 0;
-FILE *player_persist = NULL;
 
 // PLAYER.json : {
 //      "user_id": 1012823,
@@ -85,7 +84,7 @@ cJSON *encode_json()
 void players_db_init()
 {
     vec_init(&memory_db);
-    player_persist = fopen("players.json", "r+");
+    FILE * player_persist = fopen("players.json", "r");
 
     if (player_persist == NULL)
     {
@@ -118,10 +117,12 @@ void players_db_init()
     }
 
     decode_json(players);
+    fclose(player_persist);
 }
 
 void players_db_deinit()
 {
+    FILE * player_persist = fopen("players.json", "w+");
     cJSON *players = encode_json();
     char *json = cJSON_Print(players);
     fseek(player_persist, 0, SEEK_SET);
