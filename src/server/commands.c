@@ -572,7 +572,7 @@ void msg_friends(Client *client)
     {
 
         Player *friend = find_player_by_id(current->friends.data[i]);
-        const char *name = friend ? friend->name : "Anonyme(erroeur)";
+        const char *name = friend ? friend->name : "Anonyme (erreur)";
         vec_push(&vstr, name);
     }
 
@@ -583,17 +583,27 @@ void msg_friends(Client *client)
 
 void msg_addFriend(Client *client, ClientServerMessage *msg)
 {
+    if (msg->addFriend.pseudo[0] == 0)
+    {
+        write_client_error(client->sock, "Pseudo vide frérot\n");
+        return;
+    }
     Player *current = find_player_by_id(client->player);
+    if (strcmp(msg->addFriend.pseudo, current->name) == 0)
+    {
+        write_client_error(client->sock, "T'es pas ton propre ami frérot\n");
+        return;
+    }
     Player *new_friend = find_player_by_name(msg->addFriend.pseudo);
 
     if (new_friend == NULL)
     {
-        write_client_error(client->sock, "error: friend non existant");
+        write_client_error(client->sock, "Jconnais pas ce mec t'invente pas des amis mdrrrrrr la honte\n");
         return;
     }
 
     vec_push(&current->friends, new_friend->user_id);
-    write_client_status(client->sock, "ami ajouté !");
+    write_client_status(client->sock, "UN NOUVEL AMI OUAIIIIIIS\n");
     return;
 }
 
