@@ -83,7 +83,7 @@ void app(const char *address, const char *name)
     /* send our name */
     write_server(sock, name);
 
-    printf("Connected to server %s:%d as %s\n", address, PORT, name);
+    printf("Connected to server %s:%d as %.*s\n", address, PORT, MAX_USERNAME_LENGTH, name);
     printf("\n$ ");
     fflush(stdout); // sur ma machine le $ n'est pas affiché
     while (1)

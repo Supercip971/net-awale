@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "server/client2.h"
+#include "server/elo.h"
 #include "server/game.h"
 #include "server/history.h"
 #include "server/message.h"
@@ -535,7 +536,9 @@ void msg_play(Clients *connections, Client *client, Games *games, ClientServerMe
         }
         if (result != GAME_ONGOING)
         {
-            Player *winner_p = find_player_by_id(winner);
+            Player *player0 = find_player_by_id(p0->player);
+            Player *player1 = find_player_by_id(p1->player);
+            Player *winner_p = winner == p0->player ? player0 : (winner == p1->player ? player1 : NULL);
             write_winner_notify(p0->sock, winner_p ? winner_p->name : "null", false);
             write_winner_notify(p1->sock, winner_p ? winner_p->name : "null", false);
             for (int i = 0; i < game->spectatorsCount; ++i)
@@ -550,6 +553,8 @@ void msg_play(Clients *connections, Client *client, Games *games, ClientServerMe
                     }
                 }
             }
+            GAME_RESULT eloResult = result == GAME_DRAW ? GAME_RESULT_DRAW : (result == GAME_WIN_P0 ? P1_WIN : P2_WIN);
+            updateElos(player0, player1, eloResult);
             for (int i = 0; i < games->length; ++i)
             {
                 if (&(games->data[i]) == game)
@@ -779,19 +784,25 @@ void msg_giveup(Clients *connections, Client *client, Games *games)
     vec_push(&game->turns, -1);
     gameHistoryGameEnded(game, winnerIndex);
 
-    Client *winnerClient = (winnerIndex == currentPlayerIndex) ? client : adversaire;
-    Client *loserClient = (winnerIndex == currentPlayerIndex) ? adversaire : client;
+    PlayerId winnerId = game->players[winnerIndex];
+    PlayerId loserId = game->players[1 - winnerIndex];
 
-    if (winnerClient != NULL && winnerClient != client)
+    Player *winnerPlayer = find_player_by_id(winnerId);
+    Player *loserPlayer = find_player_by_id(loserId);
+
+    if (adversaire != NULL)
     {
-        write_client_status(winnerClient->sock, "\nT'as gagné frérot, gg.\n");
-    }
-    if (loserClient != NULL && loserClient != client)
-    {
-        write_client_status(loserClient->sock, "\nT'as perdu frérot, laonte.\n");
+        if (winnerId == adversaire->player)
+        {
+            write_client_status(adversaire->sock, "T'as gagné frérot, gg.\n");
+        }
+        else
+        {
+            write_client_status(adversaire->sock, "T'as perdu frérot, la honte.\n");
+        }
     }
 
-    Player *winner_p = find_player_by_id(game->players[winnerIndex]);
+    const char *winnerName = winnerPlayer ? winnerPlayer->name : "Unknown";
     for (int i = 0; i < game->spectatorsCount; ++i)
     {
         for (int j = 0; j < connections->length; ++j)
@@ -799,10 +810,18 @@ void msg_giveup(Clients *connections, Client *client, Games *games)
             Client *spectator = &connections->data[j];
             if (spectator->player == game->spectators[i])
             {
-                write_winner_notify(spectator->sock, winner_p ? winner_p->name : "Unknown", false);
+                write_winner_notify(spectator->sock, winnerName, false);
                 break;
             }
         }
+    }
+
+    if (winnerPlayer != NULL && loserPlayer != NULL)
+    {
+        GAME_RESULT eloResult = winnerIndex == 0 ? P1_WIN : P2_WIN;
+        Player *p0 = winnerIndex == 0 ? winnerPlayer : loserPlayer;
+        Player *p1 = winnerIndex == 1 ? winnerPlayer : loserPlayer;
+        updateElos(p0, p1, eloResult);
     }
 
     for (int i = 0; i < games->length; ++i)

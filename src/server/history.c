@@ -193,6 +193,20 @@ int gameHistoryForEachPlayer(PlayerId of, void (*callback)(GameHistory *elt, voi
     return count;
 }
 
+int countGameHistoryForPlayer(PlayerId player)
+{
+    unsigned int count = 0;
+    for (int i = histories.length - 1; i >= 0; i--)
+    {
+        GameHistory *gh = &histories.data[i];
+        if (player == gh->p1 || player == gh->p2)
+        {
+            count++;
+        }
+    }
+    return count;
+}
+
 GameHistory *getGameHistoryById(GameHistoryId id)
 {
     for (int i = 0; i < histories.length; i++)

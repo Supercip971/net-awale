@@ -1,5 +1,6 @@
 #include "player.h"
 #include <stdio.h>
+#include "server/elo.h"
 #include "shared/json/cJSON.h"
 #include "shared/models/const.h"
 
@@ -84,7 +85,7 @@ cJSON *encode_json()
 void players_db_init()
 {
     vec_init(&memory_db);
-    FILE * player_persist = fopen("players.json", "r");
+    FILE *player_persist = fopen("players.json", "r");
 
     if (player_persist == NULL)
     {
@@ -122,7 +123,7 @@ void players_db_init()
 
 void players_db_deinit()
 {
-    FILE * player_persist = fopen("players.json", "w+");
+    FILE *player_persist = fopen("players.json", "w+");
     cJSON *players = encode_json();
     char *json = cJSON_Print(players);
     fseek(player_persist, 0, SEEK_SET);
@@ -153,6 +154,7 @@ PlayerId create_player(Player *player)
 {
     last_used_id++;
     player->user_id = last_used_id;
+    player->rank = INITIAL_ELO;
     vec_push(&memory_db, *player);
     return last_used_id;
 }
