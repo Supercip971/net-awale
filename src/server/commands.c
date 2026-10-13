@@ -259,6 +259,7 @@ void msg_defy(Clients *connections, Client *client, Games *games, ClientServerMe
     Player *client_p = find_player_by_id(client->player);
 
     write_defy_notify(adversaire->sock, client_p ? client_p->name : "Unknown");
+    write_client_status(client->sock, "CBON ! PLUKA ATTENDR MTN\n");
 }
 
 void msg_decline_defy(Clients *connections, Client *client, Games *games, ClientServerMessage *message)
