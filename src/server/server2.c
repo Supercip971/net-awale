@@ -73,6 +73,7 @@ void end(void)
 
 void app(void)
 {
+    signal(SIGPIPE, SIG_IGN);
     players_db_init();
     gameHistoryInit();
     SOCKET sock = init_connection();
@@ -208,7 +209,7 @@ void app(void)
                     }
                     else
                     {
-                        handle_message(&clients, &clients.data[i], (ClientServerMessage*)buffer, &games);
+                        handle_message(&clients, &clients.data[i], (ClientServerMessage *)buffer, &games);
                     }
                     break;
                 }
