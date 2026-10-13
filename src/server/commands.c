@@ -487,6 +487,8 @@ void msg_play(Clients *connections, Client *client, Games *games, ClientServerMe
         }
         else if (result == GAME_DRAW)
         {
+            gameHistoryGameEnded(game, -1);
+
             write_client_status(p0->sock, "\nEgalité frérot, nul.\n");
             write_client_status(p1->sock, "\nEgalité frérot, nul.\n");
             for (int i = 0; i < game->spectatorsCount; ++i)

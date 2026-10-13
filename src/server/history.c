@@ -157,7 +157,7 @@ void gameHistoryGameEnded(Game *game, int winner)
         .turns = game->turns,
         .p1 = game->players[0],
         .p2 = game->players[1],
-        .winner = game->players[winner],
+        .winner = winner == -1 ? INVALID_PLAYER_ID : game->players[winner],
         .started = game->players[game->started],
         .id = last_id,
     };
