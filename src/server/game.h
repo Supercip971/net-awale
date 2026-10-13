@@ -4,7 +4,6 @@
 #include "server/client2.h"
 #include "shared/common.h"
 #include "shared/game.h"
-#include "shared/writer.h"
 
 typedef enum
 {
@@ -27,10 +26,6 @@ int hasLegalMove(const Game *game, int player);
 // If nobody can move, remaining seeds are given to the owner of the side
 // they are on (mutates game->hands). Returns the game state.
 GameStatus gameStatus(Game *game, int nextPlayer);
-
-char *printGame(Game *game, char board[BUF_SIZE]);
-
-char *displayGame(Game *game, Writer *target);
 
 Game *find_game(Games *games, PlayerId player);
 

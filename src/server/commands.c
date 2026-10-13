@@ -12,7 +12,6 @@
 #include "shared/helper.h"
 #include "shared/models/clientServer.h"
 #include "shared/vec.h"
-#include "shared/writer.h"
 
 // TODO: Refactor with a map player: socket (avoiding n loops)
 
