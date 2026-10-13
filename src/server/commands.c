@@ -559,6 +559,7 @@ void msg_set_private(Client *client, Games *games, int private, Clients *connect
         return;
     }
     set_game_private(game, private, connections);
+    write_client_status(client->sock, private ? "CHHHHHHT c'est bon on est entre nous.\n" : "YOOO LA TEAM VENEZ NOUS VOIR.\n");
 }
 
 void msg_friends(Client *client)
