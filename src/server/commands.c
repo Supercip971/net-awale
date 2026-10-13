@@ -140,7 +140,6 @@ void msg_accept_defy(Clients *connections, Client *client, Games *games, ClientS
         }
         // L'initiateur de la demande est toujours à l'index 0
         if (
-            (game->status == WAITING && game->players[0] == client->player) ||
             (game->status == IN_GAME &&
              (game->players[0] == client->player || game->players[1] == client->player)))
         {
@@ -213,7 +212,6 @@ void msg_defy(Clients *connections, Client *client, Games *games, ClientServerMe
 
         // L'initiateur de la demande est toujours à l'index 0
         if (
-            (game->status == WAITING && game->players[0] == client->player) ||
             (game->status == IN_GAME &&
              (game->players[0] == client->player || game->players[1] == client->player)))
         {
