@@ -72,7 +72,7 @@ static GameHistory *gameHistoryDecode(cJSON *gObject)
 void gameHistoryInit()
 {
     cJSON *game_state = NULL;
-    game_hist = fopen("history.json", "rw+");
+    game_hist = fopen("history.json", "r+");
     if (game_hist == NULL)
     {
         fprintf(stderr, "Failed to open game history file: create empty history.json\n");

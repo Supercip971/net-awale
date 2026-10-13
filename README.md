@@ -2,6 +2,10 @@
 
 An app made for INSA Lyon school project.
 
+## Prerequisites
+
+Check that you have `players.json`and `history.json` files at the root of the project (not in src/)
+
 ## How to build 
 
 > dependencies:

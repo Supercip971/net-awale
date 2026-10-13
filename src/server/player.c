@@ -85,7 +85,7 @@ cJSON *encode_json()
 void players_db_init()
 {
     vec_init(&memory_db);
-    player_persist = fopen("players.json", "rw+");
+    player_persist = fopen("players.json", "r+");
 
     if (player_persist == NULL)
     {
