@@ -3,7 +3,6 @@
 #include "server/game.h"
 #include "shared/json/cJSON.h"
 
-static FILE *game_hist = NULL;
 static GameHistories histories = {};
 static GameHistoryId last_id = 1;
 
@@ -71,8 +70,9 @@ static GameHistory *gameHistoryDecode(cJSON *gObject)
 
 void gameHistoryInit()
 {
+
     cJSON *game_state = NULL;
-    game_hist = fopen("history.json", "r+");
+    FILE *game_hist = fopen("history.json", "r");
     if (game_hist == NULL)
     {
         fprintf(stderr, "Failed to open game history file: create empty history.json\n");
@@ -116,10 +116,14 @@ void gameHistoryInit()
         perror("Failed to parse game state");
         exit(EXIT_FAILURE);
     }
+
+    fclose(game_hist);
 }
 
 void gameHistoryDeinit()
 {
+    FILE *game_hist = fopen("history.json", "w");
+
     cJSON *game_state = cJSON_Parse("[]");
     if (game_state == NULL)
     {
