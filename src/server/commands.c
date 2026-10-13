@@ -111,7 +111,6 @@ void msg_player_info(Client *client, const char *pname)
     write_client_error(client->sock, "Joueur introuvable");
 }
 
-
 void msg_games(Games *games, Client *client)
 {
     write_games(client->sock, games);
@@ -421,6 +420,8 @@ void msg_play(Clients *connections, Client *client, Games *games, ClientServerMe
     {
 
         game->currentPlayer = game->currentPlayer ? 0 : 1;
+
+        GameStatus result = gameStatus(game, game->currentPlayer);
         // send to client new board
         write_gameboard(adversaire->sock, game);
         write_gameboard(client->sock, game);
@@ -567,9 +568,9 @@ void msg_addFriend(Client *client, ClientServerMessage *msg)
     return;
 }
 
-void printGameHistory(GameHistory *gameHistory, void * ctx)
+void printGameHistory(GameHistory *gameHistory, void *ctx)
 {
-    GameHistories* gameHistories = (GameHistories*)ctx;
+    GameHistories *gameHistories = (GameHistories *)ctx;
     vec_push(gameHistories, *gameHistory);
 }
 
