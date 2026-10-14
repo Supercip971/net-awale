@@ -2,8 +2,6 @@ MKCWD=mkdir -p $(@D)
 
 CC ?= gcc
 
-
-
 CFLAGS_WARNS ?= 	\
 		-Wextra 	\
 		-Wall 		\
@@ -17,9 +15,13 @@ CFLAGS = 			\
 		-std=gnu2x 	\
 		-Isrc/      \
 		-Isrc/shared/json/ \
+		-fsanitize=address  \
+		-fsanitize=undefined \
 		$(CFLAGS_WARNS)
 
-LDFLAGS=
+LDFLAGS= \
+	-fsanitize=address  \
+	-fsanitize=undefined -lm
 
 PROJECT_NAME = test
 BUILD_DIR = build
