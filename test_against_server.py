@@ -310,20 +310,33 @@ def test_rule_empty_hole_rejected():
 
 
 def test_rule_invalid_hole_index_rejected():
-    """Rule 4: Invalid hole indices (< 0 or > 5) are rejected."""
+    """Rule 4: Invalid hole indices (< 0 or > 5 or non-digit) are rejected."""
     c1, c2, _ = start_match("P1_r4", "P2_r4", south_must_start=True)
     try:
         c1.send("play -1")
         err1 = c1.drain(0.05)
         assert (
-            "respecte les règle" in err1 or "server side error" in err1
+            "usage: play <0-5>" in err1
+            or "respecte les règle" in err1
+            or "server side error" in err1
+            or "invalid command" in err1
         ), f"Expected negative hole rejection, got: {err1}"
 
         c1.send("play 6")
         err2 = c1.drain(0.05)
         assert (
-            "respecte les règle" in err2 or "server side error" in err2
+            "usage: play <0-5>" in err2
+            or "respecte les règle" in err2
+            or "server side error" in err2
+            or "invalid command" in err2
         ), f"Expected hole 6 rejection, got: {err2}"
+
+        c1.send("play abc")
+        err3 = c1.drain(0.05)
+        assert (
+            "usage: play <0-5>" in err3
+            or "invalid command" in err3
+        ), f"Expected non-digit hole rejection, got: {err3}"
     finally:
         c1.close()
         c2.close()
@@ -600,6 +613,7 @@ def test_rule_disconnect_forfeit():
     finally:
         c2.close()
 
+
 # ---------------------------------------------------------------------------
 # Games Replay Tests (from games.txt)
 # ---------------------------------------------------------------------------
@@ -630,15 +644,15 @@ def replay_game(moves: str, game_num: int) -> bool:
                 )
                 return False
 
-            if "T'as gagné" in r1:
+            if "T'as gagné" in r1 or f"{c1.name} a gagné" in resp:
                 winner = f"South ({c1.name})"
                 moves_played = step + 1
                 break
-            elif "T'as gagné" in r2:
+            elif "T'as gagné" in r2 or f"{c2.name} a gagné" in resp:
                 winner = f"North ({c2.name})"
                 moves_played = step + 1
                 break
-            elif "Egalité" in resp:
+            elif "Egalité" in resp or "égalité" in resp.lower():
                 winner = "Draw"
                 moves_played = step + 1
                 break
