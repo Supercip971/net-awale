@@ -18,6 +18,14 @@ Check that you have `players.json`and `history.json` files at the root of the pr
 make all -j
 ```
 
+### Tmux
+
+If you have tmux installed, you can launch this command to launch multiple terminals
+
+```sh
+make run
+```
+
 ## How to run 
 
 ### Server 
@@ -35,6 +43,12 @@ make all -j
 ## Tests
 
 Taken from:  https://github.com/joansalasoler/oware/blob/develop/src/test/resources/oware-bench.suite
+
+### Run
+
+```sh
+make all -j && python test_against_server.py
+```
 
 ## Features
 
