@@ -89,3 +89,8 @@ We also implemented the elo system (in `src/server/elo.c`)
 When a client disconnect, he can join his game when reconnecting. However, it's considered as soft give up. If the opponent gives up when you disconnect, he wins (not to block him).
 
 It's not possible to remove friends, and it's done on purpose. What if your friend is watching and then you remove him? Both choices to kick him or to make him stay wasn't acceptable for us so we chose not to implement it.
+
+## Contributors
+
+- 🐐 Le GOAT Cyprien Bouvier 🐐
+- 😡 L'aigri Corentin Lemaire 😡
