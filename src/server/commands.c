@@ -88,17 +88,20 @@ int findOpponentNameAndGame(Client **adversaire, Clients *connections, Games *ga
 // create a list of player separated by ';'
 void msg_players(Clients *connections, Client *client)
 {
-    vec_str_t vstr;
-    vec_init(&vstr);
+    Players ps;
+    vec_init(&ps);
     for (int i = 0; i < connections->length; ++i)
     {
-        Player *player = find_player_by_id(connections->data[i].player);
-        const char *name = player ? player->name : "Anonyme(erroeur)";
-        vec_push(&vstr, name);
+        Player * player = find_player_by_id(connections->data[i].player);
+        if (player == NULL)
+        {
+            continue;
+        }
+        vec_push(&ps, *player);
     }
 
-    write_client_players(client->sock, vstr);
-    vec_deinit(&vstr);
+    write_client_players(client->sock, ps, false);
+    vec_deinit(&ps);
 }
 
 void msg_player_info(Client *client, const char *pname)
@@ -849,6 +852,23 @@ void signal_disconnect(Clients *listeClients, Client *client, Games *games)
         }
     }
 }
+
+void leaderboards( Client *client)
+{
+    Players leaderboard = {};
+    vec_init(&leaderboard);
+    players_leaderboard(&leaderboard);
+
+    if (leaderboard.length > 10)
+    {
+        leaderboard.length = 10;
+    }
+
+    write_client_players(client->sock, leaderboard, true);
+
+    vec_deinit(&leaderboard);
+}
+
 void handle_message(Clients *connections, Client *client, ClientServerMessage *message, Games *games)
 {
     if (message->protocol_magic != PROTOCOL_MAGIC)
@@ -941,6 +961,9 @@ void handle_message(Clients *connections, Client *client, ClientServerMessage *m
     }
     case MSG_GIVE_UP:
         msg_giveup(connections, client, games);
+        break;
+    case MSG_LEADERBOARD:
+        leaderboards( client);
         break;
     default:
         break;

@@ -8,6 +8,7 @@ void showHelp()
     printf("  players                  - affiche la liste des joueurs connectes\n");
     printf("  info <player>            - affiche les informations / le profil d'un joueur\n");
     printf("  message <text>           - envoie un message dans le chat global\n");
+    printf("  leaderboards             - affiche le classement des joueurs\n");
 
     printf("\n = Matchmaking & Games:\n");
     printf("  games                    - liste les parties en cours\n");

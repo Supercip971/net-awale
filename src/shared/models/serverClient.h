@@ -4,7 +4,6 @@
 #include "shared/models/const.h"
 #include "shared/models/shared.h"
 
-
 typedef enum
 {
     MSG_RET_STATUS, // a custom string displaying a status
@@ -48,8 +47,10 @@ typedef struct
 
         struct
         {
+            bool is_leaderboard;
             Username names[16];
-        } onlinePlayersSet; // STREAMED
+            int elos[16];
+        } onlinePlayersSet, leaderboards; // STREAMED
 
         struct
         {

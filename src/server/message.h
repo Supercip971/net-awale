@@ -1,8 +1,9 @@
 #pragma once
 
 #include "server/client2.h"
-#include "shared/common.h"
 #include "server/history.h"
+#include "server/player.h"
+#include "shared/common.h"
 #include "shared/game.h"
 #include "shared/models/clientServer.h"
 #include "shared/vec.h"
@@ -14,7 +15,7 @@ void write_client_error(SOCKET sock, const char *error);
 void write_client_stopstream(SOCKET sock);
 
 // a list of player
-void write_client_players(SOCKET sock, vec_str_t players);
+void write_client_players(SOCKET sock, Players players, bool is_leaderboard);
 
 void write_client_info(SOCKET sock, const char *name, const char *bio, int rank);
 

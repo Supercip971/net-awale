@@ -7,7 +7,15 @@
 
 static void startPlayerListStream(SOCKET *socket, Server2ClientMessage *starter)
 {
-    printf("Liste des petits filous connectés :\n");
+
+    if(starter->leaderboards.is_leaderboard)
+    {
+        printf("Classement des TITANS GOATED :\n");
+    }
+    else
+    {
+        printf("Liste des petits filous connectés :\n");
+    }
 
     while (starter->kind != MSG_RET_END)
     {
@@ -15,7 +23,8 @@ static void startPlayerListStream(SOCKET *socket, Server2ClientMessage *starter)
         {
             if (starter->onlinePlayersSet.names[i][0] == '\0')
                 break;
-            printf("- %s\n", starter->onlinePlayersSet.names[i]);
+            printf("- %s (%i) \n", starter->onlinePlayersSet.names[i],
+                starter->onlinePlayersSet.elos[i]);
         }
 
         receive_message(*socket, starter);

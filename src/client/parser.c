@@ -173,6 +173,10 @@ ClientServerMessage *encode_message(const char *buffer)
     {
         msg->kind = MSG_GIVE_UP;
     }
+    else if(strcmp(command, "leaderboards") == 0)
+    {
+        msg->kind = MSG_LEADERBOARD;
+    }
     else
     {
         return NULL;
