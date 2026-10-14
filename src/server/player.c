@@ -194,3 +194,23 @@ int has_friend(Player *p, PlayerId id)
     }
     return 0;
 }
+
+
+
+static int rankCompareBmA(void const* _A, void const* _B)
+{
+    Player const* A = _A;
+    Player const* B = _B;
+
+    return (int)B->rank - (int)A->rank;
+}
+
+void players_leaderboard(Players *output)
+{
+    for(int i = 0; i < memory_db.length; ++i)
+    {
+        vec_push(output, memory_db.data[i]);
+    }
+
+    qsort(output->data, output->length, sizeof(Player), rankCompareBmA);
+}

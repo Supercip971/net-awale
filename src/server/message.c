@@ -50,7 +50,7 @@ void write_client_stopstream(SOCKET sock)
     write_client(sock, &raw);
 }
 
-void write_client_players(SOCKET sock, vec_str_t players)
+void write_client_players(SOCKET sock, Players players, bool is_leaderboard)
 {
     if (players.length == 0)
     {
@@ -58,19 +58,23 @@ void write_client_players(SOCKET sock, vec_str_t players)
             .magic = PROTOCOL_MAGIC,
             .kind = MSG_RET_PLAYERS_STREAM,
         };
+        raw.leaderboards.is_leaderboard = is_leaderboard;
         write_client(sock, &raw);
         write_client_stopstream(sock);
     }
+
     for (int i = 0; i < players.length; i += 16)
     {
         Server2ClientMessage raw = {
             .magic = PROTOCOL_MAGIC,
             .kind = MSG_RET_PLAYERS_STREAM,
         };
+        raw.leaderboards.is_leaderboard = is_leaderboard;
 
         for (int j = 0; j < 16 && i + j < players.length; j++)
         {
-            strccpy(raw.onlinePlayersSet.names[j], players.data[i + j], sizeof(raw.onlinePlayersSet.names[j]));
+            strccpy(raw.onlinePlayersSet.names[j], players.data[i + j].name, sizeof(raw.onlinePlayersSet.names[j]));
+            raw.onlinePlayersSet.elos[j] = players.data[i + j].rank;
         }
 
         write_client(sock, &raw);

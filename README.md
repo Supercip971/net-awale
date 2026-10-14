@@ -62,6 +62,7 @@ These commands explain the most features that we have
 | players | affiche la liste des joueurs connectes |
 | help | affiche l'aide des commandes |
 | players | affiche la liste des joueurs connectes |
+| leaderboards | affiche le classement des joueurs |
 | info <player> | affiche les informations / le profil d'un joueur |
 | message <text> | envoie un message dans le chat global |
 | games | liste les parties en cours |

@@ -26,7 +26,8 @@ typedef enum
     MSG_REPLAY_GAME,
     MSG_STEP_REPLAY,
     MSG_GIVE_UP,
-    MSG_CONTINUE_REPLAY
+    MSG_CONTINUE_REPLAY,
+    MSG_LEADERBOARD,
 } MsgType;
 
 typedef struct
