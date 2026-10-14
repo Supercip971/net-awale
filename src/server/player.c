@@ -118,6 +118,7 @@ void players_db_init()
     }
 
     decode_json(players);
+    cJSON_Delete(players);
     fclose(player_persist);
 }
 

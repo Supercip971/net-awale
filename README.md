@@ -50,6 +50,22 @@ Taken from:  https://github.com/joansalasoler/oware/blob/develop/src/test/resour
 make all -j && python test_against_server.py
 ```
 
+### Valgrind & leaks
+
+#### Linux (Valgrind)
+
+```sh
+make valgrind-server
+make valgrind-client ARGS="127.0.0.1 {NAME}"
+```
+
+#### MacOS (Leaks)
+
+```sh
+make leaks-server
+make leaks-client ARGS="127.0.0.1 {NAME}"
+```
+
 ## Features
 
 ### Commands

@@ -15,13 +15,9 @@ CFLAGS = 			\
 		-std=gnu2x 	\
 		-Isrc/      \
 		-Isrc/shared/json/ \
-		-fsanitize=address  \
-		-fsanitize=undefined \
 		$(CFLAGS_WARNS)
 
-LDFLAGS= \
-	-fsanitize=address  \
-	-fsanitize=undefined -lm
+LDFLAGS= -lm
 
 PROJECT_NAME = test
 BUILD_DIR = build
@@ -74,9 +70,29 @@ N ?= 3
 run: all
 	@./run_tmux.sh $(N)
 
-clean:
-	@rm -rf $(BUILD_DIR)/
+VALGRIND ?= valgrind
+VALGRIND_FLAGS ?= --leak-check=full --show-leak-kinds=all --track-origins=yes --error-exitcode=1
+VALGRIND_BUILD_DIR = build-valgrind
 
-.PHONY: clean all run client server tmux
+valgrind-server:
+	@$(MAKE) --no-print-directory SAN=0 BUILD_DIR=$(VALGRIND_BUILD_DIR) $(VALGRIND_BUILD_DIR)/server
+	@$(VALGRIND) $(VALGRIND_FLAGS) ./$(VALGRIND_BUILD_DIR)/server
+
+valgrind-client:
+	@$(MAKE) --no-print-directory SAN=0 BUILD_DIR=$(VALGRIND_BUILD_DIR) $(VALGRIND_BUILD_DIR)/client
+	@$(VALGRIND) $(VALGRIND_FLAGS) ./$(VALGRIND_BUILD_DIR)/client $(ARGS)
+
+leaks-server:
+	@$(MAKE) --no-print-directory SAN=0 BUILD_DIR=$(VALGRIND_BUILD_DIR) $(VALGRIND_BUILD_DIR)/server
+	@leaks --atExit -- ./$(VALGRIND_BUILD_DIR)/server
+
+leaks-client:
+	@$(MAKE) --no-print-directory SAN=0 BUILD_DIR=$(VALGRIND_BUILD_DIR) $(VALGRIND_BUILD_DIR)/client
+	@leaks --atExit -- ./$(VALGRIND_BUILD_DIR)/client $(ARGS)
+
+clean:
+	@rm -rf $(BUILD_DIR)/ $(VALGRIND_BUILD_DIR)/
+
+.PHONY: clean all run client server tmux valgrind-server valgrind-client leaks-server leaks-client
 
 -include $(DFILES_CLIENT) $(DFILES_SERVER) $(DFILES_SHARED)

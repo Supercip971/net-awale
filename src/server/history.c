@@ -106,6 +106,7 @@ void gameHistoryInit()
             cJSON *gObject = cJSON_GetArrayItem(game_state, i);
             GameHistory *gh = gameHistoryDecode(gObject);
             vec_push(&histories, *gh);
+            free(gh);
         }
 
         cJSON_Delete(game_state);

@@ -281,6 +281,7 @@ void app(void)
     players_db_deinit();
     gameHistoryDeinit();
     clear_clients(&clients);
+    vec_deinit(&clients);
     end_connection(sock);
 }
 
