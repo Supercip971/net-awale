@@ -1,6 +1,7 @@
 #include "player.h"
 #include <stdio.h>
 #include "server/elo.h"
+#include "shared/helper.h"
 #include "shared/json/cJSON.h"
 #include "shared/models/const.h"
 
@@ -156,6 +157,7 @@ PlayerId create_player(Player *player)
     last_used_id++;
     player->user_id = last_used_id;
     player->rank = INITIAL_ELO;
+    strccpy(player->bio, "Un joueur de ouf", sizeof(player->bio));
     vec_push(&memory_db, *player);
     return last_used_id;
 }
@@ -196,19 +198,17 @@ int has_friend(Player *p, PlayerId id)
     return 0;
 }
 
-
-
-static int rankCompareBmA(void const* _A, void const* _B)
+static int rankCompareBmA(void const *_A, void const *_B)
 {
-    Player const* A = _A;
-    Player const* B = _B;
+    Player const *A = _A;
+    Player const *B = _B;
 
     return (int)B->rank - (int)A->rank;
 }
 
 void players_leaderboard(Players *output)
 {
-    for(int i = 0; i < memory_db.length; ++i)
+    for (int i = 0; i < memory_db.length; ++i)
     {
         vec_push(output, memory_db.data[i]);
     }

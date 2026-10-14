@@ -92,7 +92,7 @@ void msg_players(Clients *connections, Client *client)
     vec_init(&ps);
     for (int i = 0; i < connections->length; ++i)
     {
-        Player * player = find_player_by_id(connections->data[i].player);
+        Player *player = find_player_by_id(connections->data[i].player);
         if (player == NULL)
         {
             continue;
@@ -317,6 +317,7 @@ void msg_decline_defy(Clients *connections, Client *client, Games *games, Client
     char buffer[256];
     snprintf(buffer, sizeof(buffer), "déso, %s a trop peur, il a refusé\n", client_p ? client_p->name : "Unknown");
     write_client_error(adversaire->sock, buffer);
+    write_client_status(client->sock, "HAHAHAHA REFUSÉ HAHAHAHAHA (loser)\n");
 }
 
 void msg_cancel_defy(Clients *connections, Client *client, Games *games, ClientServerMessage *message)
@@ -853,7 +854,7 @@ void signal_disconnect(Clients *listeClients, Client *client, Games *games)
     }
 }
 
-void leaderboards( Client *client)
+void leaderboards(Client *client)
 {
     Players leaderboard = {};
     vec_init(&leaderboard);
@@ -963,7 +964,7 @@ void handle_message(Clients *connections, Client *client, ClientServerMessage *m
         msg_giveup(connections, client, games);
         break;
     case MSG_LEADERBOARD:
-        leaderboards( client);
+        leaderboards(client);
         break;
     default:
         break;
